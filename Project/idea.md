@@ -2,7 +2,7 @@ Project Name: GlarmTo (กล้ามโต)
 
 Concept: "Simple Log for Big Gains" – แอปพลิเคชันบันทึกการออกกำลังกายและโภชนาการสำหรับคนที่ต้องการสร้างกล้ามเนื้อ เน้นความรวดเร็วในการจดบันทึก (Quick Log) และดูพัฒนาการได้ทันที
 
-📅 Phase 1: The MVP 
+Phase 1: The MVP 
 เป้าหมาย: เน้นฟังก์ชันพื้นฐานครบ
 
 1. Workout Logger 
@@ -28,7 +28,7 @@ Phase 2: Visualization & Usability (พัฒนาต่อให้สวย�
 3. Rest Timer (ตัวช่วยจับเวลา)
 ปุ่มจับเวลาพักระหว่างเซต (60 วินาที, 90 วินาที) เมื่อครบเวลาจะมีเสียงเตือน หรือสั่นแจ้งเตือน
 
-🚀 Phase 3: Advanced Features 
+Phase 3: Advanced Features 
 เป้าหมาย: ใช้ Logic ซับซ้อนขึ้น มีการคำนวณและกราฟ
 
 1. Progressive Overload Graph
@@ -38,7 +38,7 @@ Phase 2: Visualization & Usability (พัฒนาต่อให้สวย�
 3. Body Weight Tracker
 ส่วนบันทึกน้ำหนักตัวของผู้ใช้ และแสดงกราฟน้ำหนักตัวแยกต่างหาก
 
-🔮 Future Features (สิ่งที่อยากทำในอนาคต)
+Future Features (สิ่งที่อยากทำในอนาคต)
 ไว้ตอบคำถามอาจารย์ว่า "ถ้ามีเวลาอีก 1 ปีจะทำอะไรเพิ่ม?"
 
 AI Coach Suggestions: เชื่อมต่อกับ AI (เช่น OpenAI API) ให้ช่วยจัดตารางฝึกให้ใหม่ทุกสัปดาห์ โดยดูจากสถิติการยกของเรา
