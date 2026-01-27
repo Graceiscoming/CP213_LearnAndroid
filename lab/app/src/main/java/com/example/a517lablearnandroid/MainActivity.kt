@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
                 }
 
 
-                //image
+                //images
 
                 //status
             }
