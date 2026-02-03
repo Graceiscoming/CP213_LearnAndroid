@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
         setContent {
 
             Column(modifier = Modifier.fillMaxSize()
-                .background(color=Color.Green)
+                .background(color=Color.Gray)
                 .padding(32.dp))  {
                 //hp
                 Box(modifier = Modifier
