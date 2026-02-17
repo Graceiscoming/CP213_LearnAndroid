@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -21,7 +23,8 @@
             android:name=".utils.SharedPreferences"
             android:exported="false"
             android:label="@string/title_activity_shared_preferences"
-            android:theme="@style/Theme._517LabLearnAndroid" />
+            android:theme="@style/Theme._517LabLearnAndroid"
+            tools:ignore="MissingClass" />
         <activity
             android:name=".MenuActivity"
             android:exported="true"

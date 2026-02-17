@@ -24,16 +24,16 @@ class SharedPreferencesActivity : ComponentActivity() {
         SharedPreferencesUtil.saveString("user_name", "Naratip")
         SharedPreferencesUtil.saveBoolean("is_dark_mode", true)
 
-// การดึงค่ามาใช้งาน (เช่น เมื่อเปิดแอพขึ้นมาใหม่)
+        // การดึงค่ามาใช้งาน (เช่น เมื่อเปิดแอพขึ้นมาใหม่)
         val name = SharedPreferencesUtil.getString("user_name")
         val darkMode = SharedPreferencesUtil.getBoolean("is_dark_mode")
         
-
+        enableEdgeToEdge()
         setContent {
             _517LabLearnAndroidTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Android",
+                        name = name,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }

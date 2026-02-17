@@ -27,17 +27,22 @@ class MenuActivity : ComponentActivity() {
                 Button(onClick = {
                     startActivity(Intent(this@MenuActivity, RPGCardActivity::class.java))
                 }) {
-                    Text(text = "RPGCardActivity")
+                    Text(text = "MainActivity")
                 }
                 Button(onClick = {
                     startActivity(Intent(this@MenuActivity, MainActivity2::class.java))
                 }) {
-                    Text(text = "RPGCardActivity")
+                    Text(text = "MainActivity2")
                 }
                 Button(onClick = {
                     startActivity(Intent(this@MenuActivity, ListActivity::class.java))
                 }) {
-                    Text(text = "RPGCardActivity")
+                    Text(text = "ListActivity")
+                }
+                Button(onClick = {
+                    startActivity(Intent(this@MenuActivity, SharedPreferencesActivity::class.java))
+                }) {
+                    Text(text = "SharedPreferencesActivity")
                 }
             }
         }
