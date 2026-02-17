@@ -1,5 +1,7 @@
 package com.example.a517lablearnandroid
 
+
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -27,27 +29,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 
 
-class ListActivity : ComponentActivity() {
+class PokedexActivity : ComponentActivity() {
 
     private val viewModel: PokemonViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.i("Lifecycle", "ListActivity : onCreate")
+        Log.i("Lifecycle", "PokedexActivity : onCreate")
         enableEdgeToEdge()
         setContent {
-            PokemonListScreen(viewModel)
+            ListScreen(viewModel)
         }
     }
 }
 
 @Composable
-fun PokemonListScreen(viewModel: PokemonViewModel) {
+fun ListScreen(viewModel: PokemonViewModel) {
 
     val pokemonList by viewModel.pokemonList.collectAsState()
 
@@ -69,7 +72,7 @@ fun PokemonListScreen(viewModel: PokemonViewModel) {
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
                             text = item.pokemon_species.name,
-                            modifier = Modifier.weight(1f) // ให้ชื่อกินพื้นที่ที่เหลือ ดันรูปไปขวาสุด
+                            modifier = Modifier.weight(1f)
                         )
 
                         val imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${item.entry_number}.png"
@@ -77,13 +80,14 @@ fun PokemonListScreen(viewModel: PokemonViewModel) {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
                                 .data(imageUrl)
-                                .crossfade(true) // ให้รูปค่อยๆ เฟดขึ้นมาเมื่อโหลดเสร็จ
+                                .crossfade(true)
                                 .build(),
                             contentDescription = "Sprite of ${item.pokemon_species.name}",
                             modifier = Modifier
-                                .size(64.dp),
-                            placeholder = painterResource(id = R.drawable.ic_launcher_foreground), // รูปขณะโหลด
-                            error = painterResource(id = R.drawable.ic_launcher_background) // รูปเมื่อโหลดพลาด
+                                .size(64.dp)
+                                .background(Color.LightGray), // Debug background
+                            placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
+                            error = painterResource(id = R.drawable.ic_launcher_background)
                         )
                     }
                 }
@@ -91,3 +95,5 @@ fun PokemonListScreen(viewModel: PokemonViewModel) {
         }
     }
 }
+
+

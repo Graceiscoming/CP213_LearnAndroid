@@ -15,6 +15,11 @@
         android:theme="@style/Theme._517LabLearnAndroid"
         tools:targetApi="31">
         <activity
+            android:name=".PokedexActivity"
+            android:exported="false"
+            android:label="@string/title_activity_pokedex"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+        <activity
             android:name=".SharedPreferencesActivity"
             android:exported="false"
             android:label="@string/title_activity_shared_preferences"

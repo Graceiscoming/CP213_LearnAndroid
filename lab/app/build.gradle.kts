@@ -56,6 +56,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation("io.coil-kt:coil-compose:2.5.0") // Check for the latest version
 
     // Retrofit สำหรับคุยกับ Server
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
