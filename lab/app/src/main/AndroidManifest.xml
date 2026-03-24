@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
@@ -73,6 +74,16 @@
             <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
             <!-- </intent-filter> -->
         </activity>
+        <activity
+            android:name=".CameraActivity"
+            android:exported="false"
+            android:label="Camera &amp; Permission"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+        <activity
+            android:name=".SensorActivity"
+            android:exported="false"
+            android:label="Sensor &amp; MVVM"
+            android:theme="@style/Theme._517LabLearnAndroid" />
     </application>
 
 </manifest>
