@@ -9,35 +9,45 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+private val DarkRedColorScheme = darkColorScheme(
+    primary = BloodRed,
+    secondary = DarkRed,
+    tertiary = LightRed,
+    background = DarkBackground,
+    surface = DarkSurface,
+    onPrimary = LightText,
+    onSecondary = LightText,
+    onTertiary = DarkBackground,
+    onBackground = LightText,
+    onSurface = LightText
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+// We force the app to always use the dark red/black theme for "GlarmTo"
+private val LightRedColorScheme = darkColorScheme(
+    primary = BloodRed,
+    secondary = DarkRed,
+    tertiary = LightRed,
+    background = DarkBackground,
+    surface = DarkSurface,
+    onPrimary = LightText,
+    onSecondary = LightText,
+    onTertiary = DarkBackground,
+    onBackground = LightText,
+    onSurface = LightText
 )
 
 @Composable
 fun GlarmToTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true, // Defaulting to dark for Black & Red theme
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // Disable dynamic colors so it stays Red & Black
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -45,9 +55,16 @@ fun GlarmToTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> DarkRedColorScheme
+        else -> LightRedColorScheme
+    }
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = colorScheme.background.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+        }
     }
 
     MaterialTheme(
