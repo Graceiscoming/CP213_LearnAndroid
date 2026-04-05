@@ -1,0 +1,33 @@
+package com.example.glarmto.data.preferences
+
+import android.content.Context
+import android.content.SharedPreferences
+
+class SessionManager(context: Context) {
+    private val prefs: SharedPreferences = context.getSharedPreferences("glarmto_prefs", Context.MODE_PRIVATE)
+
+    fun loginUser(username: String) {
+        prefs.edit().putString(KEY_USERNAME, username).apply()
+    }
+
+    fun setProfileSetup(setup: Boolean) {
+        prefs.edit().putBoolean("${KEY_PROFILE_SETUP}_${getCurrentUser()}", setup).apply()
+    }
+
+    fun isProfileSetup(): Boolean {
+        return prefs.getBoolean("${KEY_PROFILE_SETUP}_${getCurrentUser()}", false)
+    }
+
+    fun logoutUser() {
+        prefs.edit().remove(KEY_USERNAME).apply()
+    }
+
+    fun getCurrentUser(): String? {
+        return prefs.getString(KEY_USERNAME, null)
+    }
+
+    companion object {
+        private const val KEY_USERNAME = "current_username"
+        private const val KEY_PROFILE_SETUP = "profile_setup"
+    }
+}

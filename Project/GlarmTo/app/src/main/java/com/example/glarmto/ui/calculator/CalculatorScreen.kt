@@ -4,19 +4,32 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.glarmto.GlarmToApplication
 import kotlin.math.roundToInt
 
 @Composable
 fun CalculatorScreen() {
+    val context = LocalContext.current
+    val application = context.applicationContext as GlarmToApplication
+    val viewModel: CalculatorViewModel = viewModel(
+        factory = CalculatorViewModelFactory(application, application.repository)
+    )
+
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("BMR / TDEE", "1RM Calculator")
+    val tabs = listOf("My Profile", "1RM Calculator")
 
     Column(modifier = Modifier.fillMaxSize()) {
         TabRow(selectedTabIndex = selectedTab) {
@@ -35,7 +48,7 @@ fun CalculatorScreen() {
                 .padding(16.dp)
         ) {
             when (selectedTab) {
-                0 -> BmrTdeeCalculator()
+                0 -> ProfileEditor(viewModel)
                 1 -> OneRepMaxCalculator()
             }
         }
@@ -43,17 +56,19 @@ fun CalculatorScreen() {
 }
 
 @Composable
-fun BmrTdeeCalculator() {
-    var age by remember { mutableStateOf("") }
-    var weight by remember { mutableStateOf("") }
-    var height by remember { mutableStateOf("") }
-    var isMale by remember { mutableStateOf(true) }
+fun ProfileEditor(viewModel: CalculatorViewModel) {
+    val user by viewModel.currentUser.collectAsState()
+    
+    // We only populate these if we enter edit mode, else we show current stats
+    var isEditing by remember { mutableStateOf(false) }
+    
+    var editAge by remember { mutableStateOf("") }
+    var editWeight by remember { mutableStateOf("") }
+    var editHeight by remember { mutableStateOf("") }
+    var editIsMale by remember { mutableStateOf(true) }
 
-    var bmrResult by remember { mutableStateOf(0.0) }
-    var tdeeResult by remember { mutableStateOf(0.0) }
-
+    val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
-    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -61,76 +76,104 @@ fun BmrTdeeCalculator() {
             .fillMaxWidth()
             .verticalScroll(scrollState)
     ) {
-        Text("Calorie Needs Calculator", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            FilterChip(
-                selected = isMale,
-                onClick = { isMale = true },
-                label = { Text("Male") }
-            )
-            FilterChip(
-                selected = !isMale,
-                onClick = { isMale = false },
-                label = { Text("Female") }
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Person, contentDescription = "Profile", tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(8.dp))
+            Text("User Profile & TDEE", fontSize = 24.sp, fontWeight = FontWeight.Bold)
         }
 
-        OutlinedTextField(
-            value = age,
-            onValueChange = { age = it },
-            label = { Text("Age (years)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = weight,
-            onValueChange = { weight = it },
-            label = { Text("Weight (kg)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = height,
-            onValueChange = { height = it },
-            label = { Text("Height (cm)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Button(
-            onClick = {
-                focusManager.clearFocus() // Hide keyboard
-                val a = age.trim().toIntOrNull() ?: 0
-                val w = weight.trim().toDoubleOrNull() ?: 0.0
-                val h = height.trim().toDoubleOrNull() ?: 0.0
-
-                if (a > 0 && w > 0 && h > 0) {
-                    // Mifflin-St Jeor Equation
-                    bmrResult = if (isMale) {
-                        (10 * w) + (6.25 * h) - (5 * a) + 5
-                    } else {
-                        (10 * w) + (6.25 * h) - (5 * a) - 161
+        user?.let { u ->
+            if (!isEditing) {
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Username: ${u.username}", fontWeight = FontWeight.Bold)
+                        Text("Age: ${u.age} years")
+                        Text("Gender: ${if (u.isMale) "Male" else "Female"}")
+                        Text("Weight: ${u.weight} kg")
+                        Text("Height: ${u.height} cm")
+                        Divider(modifier = Modifier.padding(vertical = 8.dp))
+                        Text("Daily Calorie Target: ${u.dailyGoal} kcal", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+                        
+                        Button(onClick = { 
+                            editAge = u.age.toString()
+                            editWeight = u.weight.toString()
+                            editHeight = u.height.toString()
+                            editIsMale = u.isMale
+                            isEditing = true 
+                        }, modifier = Modifier.padding(top = 8.dp)) {
+                            Text("Edit Profile")
+                        }
                     }
-                    tdeeResult = bmrResult * 1.55 // Assuming moderate activity
                 }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Calculate")
-        }
+            } else {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text("Edit Profile", fontWeight = FontWeight.Bold)
+                        
+                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            FilterChip(
+                                selected = editIsMale,
+                                onClick = { editIsMale = true },
+                                label = { Text("Male") }
+                            )
+                            FilterChip(
+                                selected = !editIsMale,
+                                onClick = { editIsMale = false },
+                                label = { Text("Female") }
+                            )
+                        }
 
-        if (bmrResult > 0) {
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("BMR: ${bmrResult.roundToInt()} kcal/day", fontWeight = FontWeight.Bold)
-                    Text("TDEE (Maintenance): ${tdeeResult.roundToInt()} kcal/day")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Bulking Goal (+300): ${(tdeeResult + 300).roundToInt()} kcal")
-                    Text("Cutting Goal (-300): ${(tdeeResult - 300).roundToInt()} kcal")
+                        OutlinedTextField(
+                            value = editAge,
+                            onValueChange = { editAge = it },
+                            label = { Text("Age (years)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = editWeight,
+                            onValueChange = { editWeight = it },
+                            label = { Text("Weight (kg)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = editHeight,
+                            onValueChange = { editHeight = it },
+                            label = { Text("Height (cm)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(onClick = { isEditing = false }, modifier = Modifier.weight(1f)) {
+                                Text("Cancel")
+                            }
+                            Button(onClick = {
+                                focusManager.clearFocus()
+                                val a = editAge.trim().toIntOrNull() ?: u.age
+                                val w = editWeight.trim().toDoubleOrNull() ?: u.weight
+                                val h = editHeight.trim().toDoubleOrNull() ?: u.height
+                                
+                                viewModel.updateProfile(age = a, weight = w, height = h, isMale = editIsMale)
+                                isEditing = false
+                            }, modifier = Modifier.weight(1f)) {
+                                Text("Save")
+                            }
+                        }
+                    }
                 }
+            }
+            
+            // Add educational info about TDEE
+            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                 Column(modifier = Modifier.padding(16.dp)) {
+                     Text("About your Calorie Target", fontWeight = FontWeight.Bold)
+                     Spacer(modifier = Modifier.height(4.dp))
+                     Text("Your target is automatically calculated using the Mifflin-St Jeor formula to determine your Total Daily Energy Expenditure (TDEE) assuming moderate activity. If your goal is to lose weight, aim to eat 300-500 kcal less than this target. To gain muscle, eat 300 kcal more.", style = MaterialTheme.typography.bodySmall)
+                 }
             }
         }
     }
@@ -142,7 +185,7 @@ fun OneRepMaxCalculator() {
     var reps by remember { mutableStateOf("") }
     var oneRmResult by remember { mutableStateOf(0.0) }
 
-    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+    val focusManager = LocalFocusManager.current
 
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),

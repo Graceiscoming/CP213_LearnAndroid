@@ -8,5 +8,6 @@ data class NutritionEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val foodName: String,
     val calories: Int,
-    val dateInMillis: Long
+    val dateInMillis: Long,
+    val username: String = "admin"
 )

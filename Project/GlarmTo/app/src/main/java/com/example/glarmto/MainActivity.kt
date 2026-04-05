@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Fastfood
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -27,9 +28,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.glarmto.ui.calculator.CalculatorScreen
 import com.example.glarmto.ui.dashboard.DashboardScreen
+import com.example.glarmto.ui.login.LoginScreen
 import com.example.glarmto.ui.nutrition.NutritionScreen
 import com.example.glarmto.ui.theme.GlarmToTheme
 import com.example.glarmto.ui.workout.WorkoutScreen
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,7 +40,17 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             GlarmToTheme {
-                MainScreen()
+                val application = applicationContext as GlarmToApplication
+                val startDest = if (application.repository.getCurrentUser() != null) {
+                    if (application.repository.isProfileSetup()) {
+                        Screen.Dashboard.route
+                    } else {
+                        "onboarding"
+                    }
+                } else {
+                    "login"
+                }
+                MainScreen(startDest)
             }
         }
     }
@@ -47,12 +60,14 @@ sealed class Screen(val route: String, val title: String, val icon: androidx.com
     object Dashboard : Screen("dashboard", "Dashboard", Icons.Filled.Home)
     object Workout : Screen("workout", "Workout", Icons.Filled.FitnessCenter)
     object Nutrition : Screen("nutrition", "Nutrition", Icons.Filled.Fastfood)
-    object Calculator : Screen("calculator", "Calcs", Icons.Filled.Calculate)
+    object Calculator : Screen("calculator", "Profile", Icons.Filled.Person)
 }
 
 @Composable
-fun MainScreen() {
+fun MainScreen(startDestination: String) {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val application = context.applicationContext as GlarmToApplication
 
     val items = listOf(
         Screen.Dashboard,
@@ -64,10 +79,12 @@ fun MainScreen() {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
-                items.forEach { screen ->
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentDestination = navBackStackEntry?.destination
+            // Hide bottom bar on login and onboarding screens
+            if (currentDestination?.route != "login" && currentDestination?.route != "onboarding") {
+                NavigationBar {
+                    items.forEach { screen ->
                     NavigationBarItem(
                         icon = { Icon(screen.icon, contentDescription = screen.title) },
                         label = { Text(screen.title) },
@@ -90,9 +107,32 @@ fun MainScreen() {
                 }
             }
         }
+        }
     ) { innerPadding ->
-        NavHost(navController, startDestination = Screen.Dashboard.route, Modifier.padding(innerPadding)) {
-            composable(Screen.Dashboard.route) { DashboardScreen() }
+        NavHost(navController, startDestination = startDestination, Modifier.padding(innerPadding)) {
+            composable("login") { 
+                LoginScreen(onLoginSuccess = {
+                    val dest = if (application.repository.isProfileSetup()) Screen.Dashboard.route else "onboarding"
+                    navController.navigate(dest) {
+                        popUpTo("login") { inclusive = true }
+                    }
+                }) 
+            }
+            composable("onboarding") {
+                com.example.glarmto.ui.onboarding.OnboardingScreen(onComplete = {
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo("onboarding") { inclusive = true }
+                    }
+                })
+            }
+            composable(Screen.Dashboard.route) { 
+                DashboardScreen(onLogout = {
+                    application.repository.logout()
+                    navController.navigate("login") {
+                        popUpTo(Screen.Dashboard.route) { inclusive = true }
+                    }
+                }) 
+            }
             composable(Screen.Workout.route) { WorkoutScreen() }
             composable(Screen.Nutrition.route) { NutritionScreen() }
             composable(Screen.Calculator.route) { CalculatorScreen() }

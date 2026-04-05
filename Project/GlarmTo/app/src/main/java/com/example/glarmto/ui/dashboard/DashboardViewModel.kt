@@ -9,10 +9,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.glarmto.data.local.entity.NutritionEntity
 import com.example.glarmto.data.local.entity.WorkoutEntity
 import com.example.glarmto.data.repository.GlarmToRepository
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class DashboardViewModel(
@@ -20,13 +19,12 @@ class DashboardViewModel(
     repository: GlarmToRepository
 ) : AndroidViewModel(application) {
 
-    private val sharedPreferences = application.getSharedPreferences("glarmto_prefs", Context.MODE_PRIVATE)
-
-    private val _dailyGoal = MutableStateFlow(sharedPreferences.getInt("daily_calorie_goal", 2500))
-    val dailyGoal: StateFlow<Int> = _dailyGoal.asStateFlow()
+    val dailyGoal: StateFlow<Int> = repository.getUserFlow()
+        .map { user -> user?.dailyGoal ?: 2500 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 2500)
 
     fun refreshGoal() {
-        _dailyGoal.value = sharedPreferences.getInt("daily_calorie_goal", 2500)
+        // Goal is now refreshed automatically via Room flow
     }
 
     val todayWorkouts: StateFlow<List<WorkoutEntity>> = repository.getTodayWorkouts()

@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,7 +18,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.glarmto.GlarmToApplication
 
 @Composable
-fun DashboardScreen() {
+fun DashboardScreen(onLogout: () -> Unit = {}) {
     val context = LocalContext.current
     val application = context.applicationContext as GlarmToApplication
     val viewModel: DashboardViewModel = viewModel(
@@ -47,8 +48,16 @@ fun DashboardScreen() {
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item {
-            Text("Dashboard: Today", fontSize = 28.sp, fontWeight = FontWeight.Bold)
-            Text("Summary of your daily progress", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column {
+                    val username = application.repository.getCurrentUser() ?: "Guest"
+                    Text("Hello, $username! 💪", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                    Text("Summary of your daily progress", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                IconButton(onClick = onLogout) {
+                    Icon(Icons.Filled.Logout, contentDescription = "Logout", tint = MaterialTheme.colorScheme.error)
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
         }
 

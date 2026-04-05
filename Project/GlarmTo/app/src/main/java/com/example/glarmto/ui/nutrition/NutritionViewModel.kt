@@ -8,10 +8,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.glarmto.data.local.entity.NutritionEntity
 import com.example.glarmto.data.repository.GlarmToRepository
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -20,17 +20,20 @@ class NutritionViewModel(
     private val repository: GlarmToRepository
 ) : AndroidViewModel(application) {
 
-    private val sharedPreferences = application.getSharedPreferences("glarmto_prefs", Context.MODE_PRIVATE)
-
-    private val _dailyGoal = MutableStateFlow(sharedPreferences.getInt("daily_calorie_goal", 2500))
-    val dailyGoal: StateFlow<Int> = _dailyGoal.asStateFlow()
+    val dailyGoal: StateFlow<Int> = repository.getUserFlow()
+        .map { it?.dailyGoal ?: 2500 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 2500)
 
     val todayNutrition: StateFlow<List<NutritionEntity>> = repository.getTodayNutrition()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun updateDailyGoal(goal: Int) {
-        _dailyGoal.value = goal
-        sharedPreferences.edit().putInt("daily_calorie_goal", goal).apply()
+        viewModelScope.launch {
+            val user = repository.getUserFlow().firstOrNull()
+            if (user != null) {
+                repository.updateUser(user.copy(dailyGoal = goal))
+            }
+        }
     }
 
     fun addNutrition(foodName: String, calories: Int) {
