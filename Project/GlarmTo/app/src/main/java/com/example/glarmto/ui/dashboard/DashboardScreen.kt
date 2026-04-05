@@ -1,7 +1,9 @@
 package com.example.glarmto.ui.dashboard
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocalFireDepartment
@@ -30,8 +32,16 @@ fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: () -> Unit =
 
     val workouts by viewModel.todayWorkouts.collectAsState()
     val nutritions by viewModel.todayNutrition.collectAsState()
+    val user by viewModel.user.collectAsState()
     val dailyGoal by viewModel.dailyGoal.collectAsState()
     val weeklyVolume by viewModel.weeklyVolume.collectAsState()
+
+    val level = user?.level ?: 1
+    val xp = user?.xp ?: 0
+    
+    val threshold = application.repository.getTotalXPThreshold(level)
+    val required = application.repository.getXPRequiredForNextLevel(level)
+    val xpProgress = if (required > 0) (xp - threshold).toFloat() / required.toFloat() else 0f
 
     val totalConsumed = nutritions.sumOf { it.calories }
     val progress = if (dailyGoal > 0) (totalConsumed.toFloat() / dailyGoal).coerceIn(0f, 1f) else 0f
@@ -51,7 +61,33 @@ fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: () -> Unit =
                 Column(modifier = Modifier.weight(1f)) {
                     val username = application.repository.getCurrentUser() ?: "Guest"
                     Text("Hello, $username! 💪", fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                    Text("Summary of your daily progress", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    
+                    // Level & XP Bar
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                "LVL $level", 
+                                color = Color.White, 
+                                fontSize = 12.sp, 
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Box(modifier = Modifier.weight(1f).height(8.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(xpProgress)
+                                    .fillMaxHeight()
+                                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp))
+                            )
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Text("${(xp - threshold)} / $required XP", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
                 Row {
                     IconButton(onClick = onNavigateToHistory) {

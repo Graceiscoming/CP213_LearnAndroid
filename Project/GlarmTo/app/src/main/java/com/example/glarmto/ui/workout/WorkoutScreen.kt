@@ -1,16 +1,20 @@
 package com.example.glarmto.ui.workout
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ListAlt
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,6 +46,7 @@ fun WorkoutScreen() {
     val workouts by viewModel.workouts.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
     val customRoutines by viewModel.customRoutines.collectAsState()
+    val defaultRestTime by viewModel.defaultRestTime.collectAsState()
 
     var exerciseName by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
@@ -49,6 +54,21 @@ fun WorkoutScreen() {
 
     var routineQueue by remember { mutableStateOf(listOf<String>()) }
     var showRoutineDialog by remember { mutableStateOf(false) }
+
+    // Rest Timer State
+    var restTimeSeconds by remember { mutableStateOf(0) }
+    var initialRestTime by remember { mutableStateOf(60) }
+    var isTimerRunning by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isTimerRunning, restTimeSeconds) {
+        if (isTimerRunning && restTimeSeconds > 0) {
+            kotlinx.coroutines.delay(1000)
+            restTimeSeconds -= 1
+            if (restTimeSeconds == 0) {
+                isTimerRunning = false
+            }
+        }
+    }
 
     val isWorkoutDateValid = remember(selectedDate) {
         val cal = Calendar.getInstance()
@@ -65,19 +85,7 @@ fun WorkoutScreen() {
 
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = selectedDate,
-        selectableDates = object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                val cal = Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply {
-                    set(Calendar.HOUR_OF_DAY, 0)
-                    set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
-                    set(Calendar.MILLISECOND, 0)
-                }
-                val todayUtc = cal.timeInMillis
-                return utcTimeMillis <= todayUtc
-            }
-        }
+        initialSelectedDateMillis = selectedDate
     )
 
     val focusManager = LocalFocusManager.current
@@ -107,13 +115,95 @@ fun WorkoutScreen() {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Rest Timer UI
+        AnimatedVisibility(
+            visible = isTimerRunning && restTimeSeconds > 0,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.Timer, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Resting...", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    
+                    val progress = if (initialRestTime > 0) restTimeSeconds.toFloat() / initialRestTime.toFloat() else 0f
+                    LinearProgressIndicator(
+                        progress = progress,
+                        modifier = Modifier.fillMaxWidth().height(12.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+                    )
+                    
+                    Spacer(Modifier.height(12.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "${restTimeSeconds}s", 
+                            fontSize = 24.sp, 
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = { 
+                                if (restTimeSeconds > 30) restTimeSeconds -= 30 
+                                else restTimeSeconds = 1
+                            }) {
+                                Text("-30s")
+                            }
+                            TextButton(onClick = { restTimeSeconds += 30; initialRestTime += 30 }) {
+                                Text("+30s")
+                            }
+                            Button(
+                                onClick = { restTimeSeconds = 0; isTimerRunning = false },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Text("Skip")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             val dateStr = SimpleDateFormat("EEE, dd MMM", Locale.getDefault()).format(Date(selectedDate))
-            Text("Workout on $dateStr", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Column {
+                Text("Workout on $dateStr", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                if (selectedDate < Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+                }.timeInMillis || selectedDate > System.currentTimeMillis()) {
+                    TextButton(
+                        onClick = { viewModel.setSelectedDate(System.currentTimeMillis()) },
+                        contentPadding = PaddingValues(0.dp),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Text("Go to Today", fontSize = 14.sp)
+                    }
+                }
+            }
             IconButton(onClick = { showDatePicker = true }) {
                 Icon(Icons.Filled.CalendarMonth, contentDescription = "Change Date", tint = MaterialTheme.colorScheme.primary)
             }
@@ -214,6 +304,13 @@ fun WorkoutScreen() {
 
                                 if (exerciseName.isNotBlank() && w > 0 && r > 0) {
                                     viewModel.addWorkout(exerciseName.trim(), w, r)
+                                    
+                                    // Start Rest Timer (using user's default)
+                                    val dr = defaultRestTime
+                                    restTimeSeconds = dr
+                                    initialRestTime = dr
+                                    isTimerRunning = true
+                                    
                                     // Keep exercise name but clear weight/reps for next set
                                     weight = ""
                                     reps = ""

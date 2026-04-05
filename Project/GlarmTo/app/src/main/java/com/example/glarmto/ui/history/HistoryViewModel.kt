@@ -22,7 +22,14 @@ class HistoryViewModel(
     private val repository: GlarmToRepository
 ) : AndroidViewModel(application) {
 
-    private val _selectedDate = MutableStateFlow(Calendar.getInstance().timeInMillis)
+    private val _selectedDate = MutableStateFlow(
+        Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    )
     val selectedDate: StateFlow<Long> = _selectedDate.asStateFlow()
 
     @kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -44,7 +51,14 @@ class HistoryViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun setSelectedDate(date: Long) {
-        _selectedDate.value = date
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = date
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        _selectedDate.value = cal.timeInMillis
     }
 }
 

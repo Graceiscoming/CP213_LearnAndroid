@@ -3,27 +3,27 @@ package com.example.glarmto.data.preferences
 import android.content.Context
 import android.content.SharedPreferences
 
-class SessionManager(context: Context) {
-    private val prefs: SharedPreferences = context.getSharedPreferences("glarmto_prefs", Context.MODE_PRIVATE)
+open class SessionManager(context: Context?) {
+    private val prefs: SharedPreferences? = context?.getSharedPreferences("glarmto_prefs", Context.MODE_PRIVATE)
 
-    fun loginUser(username: String) {
-        prefs.edit().putString(KEY_USERNAME, username).apply()
+    open fun loginUser(username: String) {
+        prefs?.edit()?.putString(KEY_USERNAME, username)?.apply()
     }
 
-    fun setProfileSetup(setup: Boolean) {
-        prefs.edit().putBoolean("${KEY_PROFILE_SETUP}_${getCurrentUser()}", setup).apply()
+    open fun setProfileSetup(setup: Boolean) {
+        prefs?.edit()?.putBoolean("${KEY_PROFILE_SETUP}_${getCurrentUser()}", setup)?.apply()
     }
 
-    fun isProfileSetup(): Boolean {
-        return prefs.getBoolean("${KEY_PROFILE_SETUP}_${getCurrentUser()}", false)
+    open fun isProfileSetup(): Boolean {
+        return prefs?.getBoolean("${KEY_PROFILE_SETUP}_${getCurrentUser()}", false) ?: false
     }
 
-    fun logoutUser() {
-        prefs.edit().remove(KEY_USERNAME).apply()
+    open fun logoutUser() {
+        prefs?.edit()?.remove(KEY_USERNAME)?.apply()
     }
 
-    fun getCurrentUser(): String? {
-        return prefs.getString(KEY_USERNAME, null)
+    open fun getCurrentUser(): String? {
+        return prefs?.getString(KEY_USERNAME, null)
     }
 
     companion object {

@@ -32,20 +32,27 @@ class GlarmToRepository(private val dao: GlarmToDao, private val sessionManager:
     }
 
     // Workout Streams
-    fun getWorkoutsForRange(start: Long, end: Long): Flow<List<WorkoutEntity>> {
-        val username = sessionManager.getCurrentUser() ?: return emptyFlow()
-        return dao.getWorkoutsForDate(start, end, username)
-    }
-
     fun getTodayWorkouts(): Flow<List<WorkoutEntity>> {
         val (start, end) = getDayRange(Calendar.getInstance())
         return getWorkoutsForRange(start, end)
+    }
+
+    fun getWorkoutsForDay(dateMillis: Long): Flow<List<WorkoutEntity>> {
+        val cal = Calendar.getInstance().apply { timeInMillis = dateMillis }
+        val (start, end) = getDayRange(cal)
+        return getWorkoutsForRange(start, end)
+    }
+
+    fun getWorkoutsForRange(start: Long, end: Long): Flow<List<WorkoutEntity>> {
+        val username = sessionManager.getCurrentUser() ?: return emptyFlow()
+        return dao.getWorkoutsForDate(start, end, username)
     }
 
     suspend fun insertWorkout(workout: WorkoutEntity) {
         val username = sessionManager.getCurrentUser() ?: return
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             dao.insertWorkout(workout.copy(username = username))
+            awardXP(10) // 10 XP per set
         }
     }
 
@@ -56,20 +63,27 @@ class GlarmToRepository(private val dao: GlarmToDao, private val sessionManager:
     }
 
     // Nutrition Streams
-    fun getNutritionForRange(start: Long, end: Long): Flow<List<NutritionEntity>> {
-        val username = sessionManager.getCurrentUser() ?: return emptyFlow()
-        return dao.getNutritionForDate(start, end, username)
-    }
-
     fun getTodayNutrition(): Flow<List<NutritionEntity>> {
         val (start, end) = getDayRange(Calendar.getInstance())
         return getNutritionForRange(start, end)
+    }
+
+    fun getNutritionForDay(dateMillis: Long): Flow<List<NutritionEntity>> {
+        val cal = Calendar.getInstance().apply { timeInMillis = dateMillis }
+        val (start, end) = getDayRange(cal)
+        return getNutritionForRange(start, end)
+    }
+
+    fun getNutritionForRange(start: Long, end: Long): Flow<List<NutritionEntity>> {
+        val username = sessionManager.getCurrentUser() ?: return emptyFlow()
+        return dao.getNutritionForDate(start, end, username)
     }
 
     suspend fun insertNutrition(nutrition: NutritionEntity) {
         val username = sessionManager.getCurrentUser() ?: return
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             dao.insertNutrition(nutrition.copy(username = username))
+            awardXP(5) // 5 XP per food item
         }
     }
 
@@ -130,4 +144,49 @@ class GlarmToRepository(private val dao: GlarmToDao, private val sessionManager:
     
     fun getCurrentUser() = sessionManager.getCurrentUser()
     fun isProfileSetup() = sessionManager.isProfileSetup()
+
+    fun getTotalXPThreshold(level: Int): Long {
+        if (level <= 1) return 0L
+        return (1000.0 * (Math.pow(1.1, (level - 1).toDouble()) - 1.0)).toLong()
+    }
+
+    fun getXPRequiredForNextLevel(currentLevel: Int): Long {
+        return (100.0 * Math.pow(1.1, (currentLevel - 1).toDouble())).toLong()
+    }
+
+    suspend fun awardXP(amount: Int) {
+        val username = sessionManager.getCurrentUser() ?: return
+        val user = dao.getUser(username).firstOrNull() ?: return
+        
+        val today = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        
+        val currentDailyXP = if (user.lastXPDate < today) 0L else user.dailyXPEarned
+        
+        // XP Cap: 300 per day
+        val xpToAward = if (currentDailyXP + amount > 300) {
+            (300 - currentDailyXP).coerceAtLeast(0).toInt()
+        } else {
+            amount
+        }
+        
+        if (xpToAward <= 0) return
+
+        val newTotalXP = user.xp + xpToAward
+        val newDailyXP = currentDailyXP + xpToAward
+        
+        // Level Formula: L = log1.1(XP/1000 + 1) + 1
+        val newLevel = (Math.log(newTotalXP / 1000.0 + 1.0) / Math.log(1.1)).toInt() + 1
+        
+        dao.updateUser(user.copy(
+            xp = newTotalXP, 
+            level = newLevel,
+            dailyXPEarned = newDailyXP,
+            lastXPDate = today
+        ))
+    }
 }

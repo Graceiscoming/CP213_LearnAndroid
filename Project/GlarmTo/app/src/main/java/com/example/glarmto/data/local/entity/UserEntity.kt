@@ -12,5 +12,10 @@ data class UserEntity(
     val weight: Double = 0.0,
     val height: Double = 0.0,
     val dailyGoal: Int = 2500,
-    val profileSetup: Boolean = false
+    val profileSetup: Boolean = false,
+    val xp: Long = 0,
+    val level: Int = 1,
+    val defaultRestSeconds: Int = 60,
+    val dailyXPEarned: Long = 0,
+    val lastXPDate: Long = 0
 )

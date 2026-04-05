@@ -12,7 +12,7 @@ import com.example.glarmto.data.local.entity.RoutineEntity
 import com.example.glarmto.data.local.entity.UserEntity
 import com.example.glarmto.data.local.entity.WorkoutEntity
 
-@Database(entities = [WorkoutEntity::class, NutritionEntity::class, UserEntity::class, RoutineEntity::class], version = 4, exportSchema = false)
+@Database(entities = [WorkoutEntity::class, NutritionEntity::class, UserEntity::class, RoutineEntity::class], version = 7, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun glarmToDao(): GlarmToDao
@@ -53,6 +53,26 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE user_log ADD COLUMN xp INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE user_log ADD COLUMN level INTEGER NOT NULL DEFAULT 1")
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE user_log ADD COLUMN defaultRestSeconds INTEGER NOT NULL DEFAULT 60")
+            }
+        }
+
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE user_log ADD COLUMN dailyXPEarned INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE user_log ADD COLUMN lastXPDate INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -60,7 +80,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "glarmto_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 .build()
                 INSTANCE = instance
                 instance

@@ -11,13 +11,21 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() {
 
-    private val _selectedDate = MutableStateFlow(Calendar.getInstance().timeInMillis)
+    private val _selectedDate = MutableStateFlow(
+        Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    )
     val selectedDate: StateFlow<Long> = _selectedDate.asStateFlow()
 
     @kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,8 +40,19 @@ class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() 
     val customRoutines: StateFlow<List<RoutineEntity>> = repository.getRoutines()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val defaultRestTime: StateFlow<Int> = repository.getUserFlow()
+        .map { it?.defaultRestSeconds ?: 60 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 60)
+
     fun setSelectedDate(dateMillis: Long) {
-        _selectedDate.value = dateMillis
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = dateMillis
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        _selectedDate.value = cal.timeInMillis
     }
 
     fun addWorkout(exerciseName: String, weight: Double, reps: Int) {

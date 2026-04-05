@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.glarmto.data.local.entity.NutritionEntity
+import com.example.glarmto.data.local.entity.UserEntity
 import com.example.glarmto.data.local.entity.WorkoutEntity
 import com.example.glarmto.data.repository.GlarmToRepository
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,7 +25,10 @@ class DashboardViewModel(
     repository: GlarmToRepository
 ) : AndroidViewModel(application) {
 
-    val dailyGoal: StateFlow<Int> = repository.getUserFlow()
+    val user: StateFlow<UserEntity?> = repository.getUserFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val dailyGoal: StateFlow<Int> = user
         .map { user -> user?.dailyGoal ?: 2500 }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 2500)
 
@@ -32,10 +36,19 @@ class DashboardViewModel(
         // Goal is now refreshed automatically via Room flow
     }
 
-    val todayWorkouts: StateFlow<List<WorkoutEntity>> = repository.getTodayWorkouts()
+    private fun getTodayStartMillis(): Long {
+        return Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    val todayWorkouts: StateFlow<List<WorkoutEntity>> = repository.getWorkoutsForDay(getTodayStartMillis())
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val todayNutrition: StateFlow<List<NutritionEntity>> = repository.getTodayNutrition()
+    val todayNutrition: StateFlow<List<NutritionEntity>> = repository.getNutritionForDay(getTodayStartMillis())
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val weeklyVolume: StateFlow<List<Pair<String, Double>>> = repository.getUserFlow()
