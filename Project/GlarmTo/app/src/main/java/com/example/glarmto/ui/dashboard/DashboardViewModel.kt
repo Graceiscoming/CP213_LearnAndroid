@@ -11,8 +11,13 @@ import com.example.glarmto.data.local.entity.WorkoutEntity
 import com.example.glarmto.data.repository.GlarmToRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class DashboardViewModel(
     private val application: Application,
@@ -31,6 +36,36 @@ class DashboardViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val todayNutrition: StateFlow<List<NutritionEntity>> = repository.getTodayNutrition()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val weeklyVolume: StateFlow<List<Pair<String, Double>>> = repository.getUserFlow()
+        .flatMapLatest { user ->
+            val cal = Calendar.getInstance()
+            val endMillis = repository.getDayRange(cal).second
+            cal.add(Calendar.DAY_OF_YEAR, -6)
+            val startMillis = repository.getDayRange(cal).first
+            
+            repository.getWorkoutsForRange(startMillis, endMillis).map { workouts ->
+                val sdf = SimpleDateFormat("EEE", Locale.getDefault())
+                val volumeMap = mutableMapOf<String, Double>()
+                
+                // Initialize last 7 days with 0
+                for (i in 0..6) {
+                    val c = Calendar.getInstance()
+                    c.add(Calendar.DAY_OF_YEAR, -i)
+                    volumeMap[sdf.format(c.time)] = 0.0
+                }
+                
+                // Fill with actual data
+                workouts.forEach { w ->
+                    val dayName = sdf.format(java.util.Date(w.dateInMillis))
+                    volumeMap[dayName] = (volumeMap[dayName] ?: 0.0) + (w.weight * w.reps)
+                }
+                
+                // Return in chronological order (oldest to newest)
+                volumeMap.toList().reversed()
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 }
 

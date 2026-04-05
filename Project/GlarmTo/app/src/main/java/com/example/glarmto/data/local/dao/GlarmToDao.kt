@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.glarmto.data.local.entity.NutritionEntity
+import com.example.glarmto.data.local.entity.RoutineEntity
 import com.example.glarmto.data.local.entity.UserEntity
 import com.example.glarmto.data.local.entity.WorkoutEntity
 import kotlinx.coroutines.flow.Flow
@@ -41,4 +42,14 @@ interface GlarmToDao {
 
     @Query("DELETE FROM nutrition_log WHERE id = :id")
     fun deleteNutrition(id: Int): Int
+
+    // Routine Queries
+    @Query("SELECT * FROM routine_log WHERE username = :username ORDER BY id ASC")
+    fun getRoutines(username: String): Flow<List<RoutineEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertRoutine(routine: RoutineEntity): Long
+
+    @Query("DELETE FROM routine_log WHERE id = :id")
+    fun deleteRoutine(id: Int): Int
 }

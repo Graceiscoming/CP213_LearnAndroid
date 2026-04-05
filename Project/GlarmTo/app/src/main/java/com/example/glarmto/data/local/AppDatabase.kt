@@ -8,10 +8,11 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.glarmto.data.local.dao.GlarmToDao
 import com.example.glarmto.data.local.entity.NutritionEntity
+import com.example.glarmto.data.local.entity.RoutineEntity
 import com.example.glarmto.data.local.entity.UserEntity
 import com.example.glarmto.data.local.entity.WorkoutEntity
 
-@Database(entities = [WorkoutEntity::class, NutritionEntity::class, UserEntity::class], version = 3, exportSchema = false)
+@Database(entities = [WorkoutEntity::class, NutritionEntity::class, UserEntity::class, RoutineEntity::class], version = 4, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun glarmToDao(): GlarmToDao
@@ -44,6 +45,14 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `routine_log` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `username` TEXT NOT NULL, `routineName` TEXT NOT NULL, `exercises` TEXT NOT NULL)"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -51,7 +60,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "glarmto_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build()
                 INSTANCE = instance
                 instance

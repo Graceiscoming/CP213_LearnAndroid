@@ -1,38 +1,41 @@
-package com.example.glarmto.ui.nutrition
+package com.example.glarmto.ui.history
 
 import android.app.Application
-import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.glarmto.data.local.entity.NutritionEntity
+import com.example.glarmto.data.local.entity.WorkoutEntity
 import com.example.glarmto.data.repository.GlarmToRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class NutritionViewModel(
+class HistoryViewModel(
     application: Application,
     private val repository: GlarmToRepository
 ) : AndroidViewModel(application) {
-
-    val dailyGoal: StateFlow<Int> = repository.getUserFlow()
-        .map { it?.dailyGoal ?: 2500 }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 2500)
 
     private val _selectedDate = MutableStateFlow(Calendar.getInstance().timeInMillis)
     val selectedDate: StateFlow<Long> = _selectedDate.asStateFlow()
 
     @kotlinx.coroutines.ExperimentalCoroutinesApi
-    val nutritionList: StateFlow<List<NutritionEntity>> = _selectedDate
+    val workouts: StateFlow<List<WorkoutEntity>> = _selectedDate
+        .flatMapLatest { date ->
+            val cal = Calendar.getInstance().apply { timeInMillis = date }
+            val (start, end) = repository.getDayRange(cal)
+            repository.getWorkoutsForRange(start, end)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    @kotlinx.coroutines.ExperimentalCoroutinesApi
+    val nutrition: StateFlow<List<NutritionEntity>> = _selectedDate
         .flatMapLatest { date ->
             val cal = Calendar.getInstance().apply { timeInMillis = date }
             val (start, end) = repository.getDayRange(cal)
@@ -40,45 +43,19 @@ class NutritionViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun setSelectedDate(dateMillis: Long) {
-        _selectedDate.value = dateMillis
-    }
-
-    fun updateDailyGoal(goal: Int) {
-        viewModelScope.launch {
-            val user = repository.getUserFlow().firstOrNull()
-            if (user != null) {
-                repository.updateUser(user.copy(dailyGoal = goal))
-            }
-        }
-    }
-
-    fun addNutrition(foodName: String, calories: Int) {
-        viewModelScope.launch {
-            val nutrition = NutritionEntity(
-                foodName = foodName,
-                calories = calories,
-                dateInMillis = _selectedDate.value // Save to selected date
-            )
-            repository.insertNutrition(nutrition)
-        }
-    }
-
-    fun deleteNutrition(id: Int) {
-        viewModelScope.launch {
-            repository.deleteNutrition(id)
-        }
+    fun setSelectedDate(date: Long) {
+        _selectedDate.value = date
     }
 }
 
-class NutritionViewModelFactory(
+class HistoryViewModelFactory(
     private val application: Application,
     private val repository: GlarmToRepository
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(NutritionViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(HistoryViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return NutritionViewModel(application, repository) as T
+            return HistoryViewModel(application, repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

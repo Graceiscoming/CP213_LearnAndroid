@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Fastfood
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -58,6 +59,7 @@ class MainActivity : ComponentActivity() {
 
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     object Dashboard : Screen("dashboard", "Dashboard", Icons.Filled.Home)
+    object Routines : Screen("routines", "Routines", Icons.Filled.ListAlt)
     object Workout : Screen("workout", "Workout", Icons.Filled.FitnessCenter)
     object Nutrition : Screen("nutrition", "Nutrition", Icons.Filled.Fastfood)
     object Calculator : Screen("calculator", "Profile", Icons.Filled.Person)
@@ -71,6 +73,7 @@ fun MainScreen(startDestination: String) {
 
     val items = listOf(
         Screen.Dashboard,
+        Screen.Routines,
         Screen.Workout,
         Screen.Nutrition,
         Screen.Calculator
@@ -126,13 +129,24 @@ fun MainScreen(startDestination: String) {
                 })
             }
             composable(Screen.Dashboard.route) { 
-                DashboardScreen(onLogout = {
-                    application.repository.logout()
-                    navController.navigate("login") {
-                        popUpTo(Screen.Dashboard.route) { inclusive = true }
+                DashboardScreen(
+                    onLogout = {
+                        application.repository.logout()
+                        navController.navigate("login") {
+                            popUpTo(Screen.Dashboard.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToHistory = {
+                        navController.navigate("history")
                     }
-                }) 
+                ) 
             }
+            composable("history") {
+                com.example.glarmto.ui.history.HistoryScreen(onBack = {
+                    navController.popBackStack()
+                })
+            }
+            composable(Screen.Routines.route) { com.example.glarmto.ui.routines.RoutinesScreen() }
             composable(Screen.Workout.route) { WorkoutScreen() }
             composable(Screen.Nutrition.route) { NutritionScreen() }
             composable(Screen.Calculator.route) { CalculatorScreen() }

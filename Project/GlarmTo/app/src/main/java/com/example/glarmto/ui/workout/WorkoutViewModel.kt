@@ -3,18 +3,38 @@ package com.example.glarmto.ui.workout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.glarmto.data.local.entity.RoutineEntity
 import com.example.glarmto.data.local.entity.WorkoutEntity
 import com.example.glarmto.data.repository.GlarmToRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() {
 
-    // Automatically read and update flow of today's workouts from Room
-    val todayWorkouts: StateFlow<List<WorkoutEntity>> = repository.getTodayWorkouts()
+    private val _selectedDate = MutableStateFlow(Calendar.getInstance().timeInMillis)
+    val selectedDate: StateFlow<Long> = _selectedDate.asStateFlow()
+
+    @kotlinx.coroutines.ExperimentalCoroutinesApi
+    val workouts: StateFlow<List<WorkoutEntity>> = _selectedDate
+        .flatMapLatest { date ->
+            val cal = Calendar.getInstance().apply { timeInMillis = date }
+            val (start, end) = repository.getDayRange(cal)
+            repository.getWorkoutsForRange(start, end)
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val customRoutines: StateFlow<List<RoutineEntity>> = repository.getRoutines()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun setSelectedDate(dateMillis: Long) {
+        _selectedDate.value = dateMillis
+    }
 
     fun addWorkout(exerciseName: String, weight: Double, reps: Int) {
         viewModelScope.launch {
@@ -22,7 +42,7 @@ class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() 
                 exerciseName = exerciseName,
                 weight = weight,
                 reps = reps,
-                dateInMillis = System.currentTimeMillis()
+                dateInMillis = _selectedDate.value // Save to the currently selected date
             )
             repository.insertWorkout(workout)
         }

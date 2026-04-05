@@ -2,6 +2,7 @@ package com.example.glarmto.data.repository
 
 import com.example.glarmto.data.local.dao.GlarmToDao
 import com.example.glarmto.data.local.entity.NutritionEntity
+import com.example.glarmto.data.local.entity.RoutineEntity
 import com.example.glarmto.data.local.entity.WorkoutEntity
 import com.example.glarmto.data.preferences.SessionManager
 import kotlinx.coroutines.GlobalScope
@@ -13,28 +14,32 @@ import java.util.Calendar
 
 class GlarmToRepository(private val dao: GlarmToDao, private val sessionManager: SessionManager) {
 
-    // Helper to get start and end of today in millis
-    private fun getTodayRange(): Pair<Long, Long> {
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        val start = calendar.timeInMillis
+    // Helper to get start and end of a specific day in millis
+    fun getDayRange(calendar: Calendar): Pair<Long, Long> {
+        val cal = calendar.clone() as Calendar
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        val start = cal.timeInMillis
 
-        calendar.set(Calendar.HOUR_OF_DAY, 23)
-        calendar.set(Calendar.MINUTE, 59)
-        calendar.set(Calendar.SECOND, 59)
-        calendar.set(Calendar.MILLISECOND, 999)
-        val end = calendar.timeInMillis
+        cal.set(Calendar.HOUR_OF_DAY, 23)
+        cal.set(Calendar.MINUTE, 59)
+        cal.set(Calendar.SECOND, 59)
+        cal.set(Calendar.MILLISECOND, 999)
+        val end = cal.timeInMillis
         return Pair(start, end)
     }
 
     // Workout Streams
-    fun getTodayWorkouts(): Flow<List<WorkoutEntity>> {
+    fun getWorkoutsForRange(start: Long, end: Long): Flow<List<WorkoutEntity>> {
         val username = sessionManager.getCurrentUser() ?: return emptyFlow()
-        val (start, end) = getTodayRange()
         return dao.getWorkoutsForDate(start, end, username)
+    }
+
+    fun getTodayWorkouts(): Flow<List<WorkoutEntity>> {
+        val (start, end) = getDayRange(Calendar.getInstance())
+        return getWorkoutsForRange(start, end)
     }
 
     suspend fun insertWorkout(workout: WorkoutEntity) {
@@ -51,10 +56,14 @@ class GlarmToRepository(private val dao: GlarmToDao, private val sessionManager:
     }
 
     // Nutrition Streams
-    fun getTodayNutrition(): Flow<List<NutritionEntity>> {
+    fun getNutritionForRange(start: Long, end: Long): Flow<List<NutritionEntity>> {
         val username = sessionManager.getCurrentUser() ?: return emptyFlow()
-        val (start, end) = getTodayRange()
         return dao.getNutritionForDate(start, end, username)
+    }
+
+    fun getTodayNutrition(): Flow<List<NutritionEntity>> {
+        val (start, end) = getDayRange(Calendar.getInstance())
+        return getNutritionForRange(start, end)
     }
 
     suspend fun insertNutrition(nutrition: NutritionEntity) {
@@ -67,6 +76,25 @@ class GlarmToRepository(private val dao: GlarmToDao, private val sessionManager:
     suspend fun deleteNutrition(id: Int) {
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             dao.deleteNutrition(id)
+        }
+    }
+
+    // Routine Streams
+    fun getRoutines(): Flow<List<RoutineEntity>> {
+        val username = sessionManager.getCurrentUser() ?: return emptyFlow()
+        return dao.getRoutines(username)
+    }
+
+    suspend fun insertRoutine(routine: RoutineEntity) {
+        val username = sessionManager.getCurrentUser() ?: return
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            dao.insertRoutine(routine.copy(username = username))
+        }
+    }
+
+    suspend fun deleteRoutine(id: Int) {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            dao.deleteRoutine(id)
         }
     }
     
