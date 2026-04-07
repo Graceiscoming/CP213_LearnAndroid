@@ -62,6 +62,32 @@ class GlarmToRepository(private val dao: GlarmToDao, private val sessionManager:
         }
     }
 
+    // Workout Session Streams
+    suspend fun insertWorkoutSession(session: com.example.glarmto.data.local.entity.WorkoutSessionEntity): Long {
+        val username = sessionManager.getCurrentUser() ?: return 0L
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            dao.insertWorkoutSession(session.copy(username = username))
+        }
+    }
+
+    suspend fun updateWorkoutSession(session: com.example.glarmto.data.local.entity.WorkoutSessionEntity) {
+        val username = sessionManager.getCurrentUser() ?: return
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            dao.updateWorkoutSession(session.copy(username = username))
+        }
+    }
+
+    fun getWorkoutSessionsForDay(dateMillis: Long): Flow<List<com.example.glarmto.data.local.entity.WorkoutSessionEntity>> {
+        val cal = Calendar.getInstance().apply { timeInMillis = dateMillis }
+        val (start, end) = getDayRange(cal)
+        val username = sessionManager.getCurrentUser() ?: return emptyFlow()
+        return dao.getWorkoutSessionsForDate(start, end, username)
+    }
+
+    fun getWorkoutsForSession(sessionId: Int): Flow<List<WorkoutEntity>> {
+        return dao.getWorkoutsForSession(sessionId)
+    }
+
     // Nutrition Streams
     fun getTodayNutrition(): Flow<List<NutritionEntity>> {
         val (start, end) = getDayRange(Calendar.getInstance())

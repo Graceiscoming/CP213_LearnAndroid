@@ -78,6 +78,8 @@ fun ProfileEditor(viewModel: CalculatorViewModel) {
     var editHeight by remember { mutableStateOf("") }
     var editIsMale by remember { mutableStateOf(true) }
     var editRestTime by remember { mutableStateOf("") }
+    var editWorkoutDays by remember { mutableStateOf(3f) }
+    var editGoal by remember { mutableStateOf("Maintain") }
 
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
@@ -154,16 +156,44 @@ fun ProfileEditor(viewModel: CalculatorViewModel) {
             if (!isEditing) {
                 Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Username: ${u.username}", fontWeight = FontWeight.Bold)
-                        Text("Age: ${u.age} years")
-                        Text("Gender: ${if (u.isMale) "Male" else "Female"}")
-                        Text("Weight: ${u.weight} kg")
-                        Text("Height: ${u.height} cm")
-                        
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Timer, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Spacer(Modifier.width(4.dp))
-                            Text("Default Rest Time: ${u.defaultRestSeconds}s", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Username: ${u.username}", fontWeight = FontWeight.Bold)
+                                Text("Age: ${u.age} years")
+                                Text("Gender: ${if (u.isMale) "Male" else "Female"}")
+                                Text("Weight: ${u.weight} kg")
+                                Text("Height: ${u.height} cm")
+                                Text("Goal: ${u.goal}")
+                                Text("Workout Days: ${u.workoutDays} days/week")
+                                
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Filled.Timer, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Spacer(Modifier.width(4.dp))
+                                    Text("Default Rest Time: ${u.defaultRestSeconds}s", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+
+                            val heightM = u.height / 100.0
+                            val bmi = if (heightM > 0) u.weight / (heightM * heightM) else 0.0
+                            val bmiCategory = when {
+                                bmi == 0.0 -> "-"
+                                bmi < 18.5 -> "Underweight (ผอม)"
+                                bmi < 25.0 -> "Normal (ปกติ)"
+                                bmi < 30.0 -> "Overweight (ท้วม)"
+                                else -> "Obese (อ้วน)"
+                            }
+
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(start = 8.dp)) {
+                                androidx.compose.foundation.Image(
+                                    painter = androidx.compose.ui.res.painterResource(id = if (u.isMale) com.example.glarmto.R.drawable.men else com.example.glarmto.R.drawable.girl),
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier.size(150.dp),
+                                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(androidx.compose.ui.graphics.Color.White)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(String.format("BMI: %.1f", bmi), fontWeight = FontWeight.Bold, fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
+                                Text(bmiCategory, style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.White)
+                            }
                         }
 
                         Divider(modifier = Modifier.padding(vertical = 8.dp))
@@ -175,6 +205,8 @@ fun ProfileEditor(viewModel: CalculatorViewModel) {
                             editHeight = u.height.toString()
                             editIsMale = u.isMale
                             editRestTime = u.defaultRestSeconds.toString()
+                            editWorkoutDays = u.workoutDays.toFloat()
+                            editGoal = u.goal
                             isEditing = true 
                         }, modifier = Modifier.padding(top = 8.dp)) {
                             Text("Edit Profile")
@@ -231,6 +263,26 @@ fun ProfileEditor(viewModel: CalculatorViewModel) {
                             modifier = Modifier.fillMaxWidth()
                         )
 
+                        Text("Primary Goal", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                            listOf("Cut", "Maintain", "Bulk").forEach { g ->
+                                FilterChip(
+                                    selected = editGoal == g,
+                                    onClick = { editGoal = g },
+                                    label = { Text(g) }
+                                )
+                            }
+                        }
+
+                        Text("Workout Days per Week: ${editWorkoutDays.toInt()}", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+                        Slider(
+                            value = editWorkoutDays,
+                            onValueChange = { editWorkoutDays = it },
+                            valueRange = 0f..7f,
+                            steps = 6,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(onClick = { isEditing = false }, modifier = Modifier.weight(1f)) {
                                 Text("Cancel")
@@ -241,8 +293,9 @@ fun ProfileEditor(viewModel: CalculatorViewModel) {
                                 val w = editWeight.trim().toDoubleOrNull() ?: u.weight
                                 val h = editHeight.trim().toDoubleOrNull() ?: u.height
                                 val r = editRestTime.trim().toIntOrNull() ?: u.defaultRestSeconds
+                                val days = editWorkoutDays.toInt()
                                 
-                                viewModel.updateProfile(age = a, weight = w, height = h, isMale = editIsMale, restSeconds = r)
+                                viewModel.updateProfile(age = a, weight = w, height = h, isMale = editIsMale, restSeconds = r, workoutDays = days, goal = editGoal)
                                 isEditing = false
                             }, modifier = Modifier.weight(1f)) {
                                 Text("Save")
@@ -252,14 +305,7 @@ fun ProfileEditor(viewModel: CalculatorViewModel) {
                 }
             }
             
-            // Add educational info about TDEE
-            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                 Column(modifier = Modifier.padding(16.dp)) {
-                     Text("About your Calorie Target", fontWeight = FontWeight.Bold)
-                     Spacer(modifier = Modifier.height(4.dp))
-                     Text("Your target is automatically calculated using the Mifflin-St Jeor formula to determine your Total Daily Energy Expenditure (TDEE) assuming moderate activity. If your goal is to lose weight, aim to eat 300-500 kcal less than this target. To gain muscle, eat 300 kcal more.", style = MaterialTheme.typography.bodySmall)
-                 }
-            }
+            // Educational info about TDEE has been removed
         }
     }
 }

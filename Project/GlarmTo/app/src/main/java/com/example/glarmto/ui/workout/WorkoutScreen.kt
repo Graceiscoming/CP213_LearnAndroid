@@ -12,9 +12,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,6 +36,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +51,10 @@ fun WorkoutScreen() {
     val selectedDate by viewModel.selectedDate.collectAsState()
     val customRoutines by viewModel.customRoutines.collectAsState()
     val defaultRestTime by viewModel.defaultRestTime.collectAsState()
+    val isWorkingOut by viewModel.isWorkingOut.collectAsState()
+    val elapsedSeconds by viewModel.elapsedSeconds.collectAsState()
+    val user by viewModel.userFlow.collectAsState()
+    val nutrition by viewModel.todayNutrition.collectAsState()
 
     var exerciseName by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
@@ -59,6 +67,13 @@ fun WorkoutScreen() {
     var restTimeSeconds by remember { mutableStateOf(0) }
     var initialRestTime by remember { mutableStateOf(60) }
     var isTimerRunning by remember { mutableStateOf(false) }
+
+    // Finish Workout Dialog State
+    var showFinishDialog by remember { mutableStateOf(false) }
+    var finishSessionName by remember { mutableStateOf("") }
+    var finishNotes by remember { mutableStateOf("") }
+    var exhaustionLevel by remember { mutableStateOf(3) }
+    var satisfactionLevel by remember { mutableStateOf(3) }
 
     LaunchedEffect(isTimerRunning, restTimeSeconds) {
         if (isTimerRunning && restTimeSeconds > 0) {
@@ -115,6 +130,127 @@ fun WorkoutScreen() {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        if (!isWorkingOut) {
+            val totalCal = nutrition.sumOf { it.calories }
+            val goalCal = user?.dailyGoal ?: 2500
+            
+            Text("Ready to crush it?", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Daily Output Summary", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("Target Calories: $goalCal kcal")
+                    Text("Eaten: $totalCal kcal")
+                    Text("Remaining: ${goalCal - totalCal} kcal", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+            
+            Button(
+                onClick = { viewModel.startWorkout() },
+                modifier = Modifier.fillMaxWidth().height(64.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text("START WORKOUT", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+        } else {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val mm = elapsedSeconds / 60
+                    val ss = elapsedSeconds % 60
+                    Text(String.format("⏱ %02d:%02d", mm, ss), fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Button(
+                        onClick = { 
+                            showFinishDialog = true
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("FINISH")
+                    }
+                }
+            }
+        }
+
+        if (showFinishDialog) {
+            AlertDialog(
+                onDismissRequest = { showFinishDialog = false },
+                title = { Text("Workout Summary", fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(
+                            value = finishSessionName,
+                            onValueChange = { finishSessionName = it },
+                            label = { Text("Session Name (e.g., Heavy Leg Day)") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = finishNotes,
+                            onValueChange = { finishNotes = it },
+                            label = { Text("Notes (How did it go?)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3
+                        )
+                        
+                        Text("Exhaustion Level", fontWeight = FontWeight.SemiBold)
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            (1..5).forEach { level ->
+                                Icon(
+                                    imageVector = Icons.Filled.Star, 
+                                    contentDescription = null,
+                                    tint = if (level <= exhaustionLevel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                                    modifier = Modifier.size(32.dp).clickable { exhaustionLevel = level }
+                                )
+                            }
+                        }
+
+                        Text("Satisfaction Level", fontWeight = FontWeight.SemiBold)
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            (1..5).forEach { level ->
+                                Icon(
+                                    imageVector = Icons.Filled.Star, 
+                                    contentDescription = null,
+                                    tint = if (level <= satisfactionLevel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                                    modifier = Modifier.size(32.dp).clickable { satisfactionLevel = level }
+                                )
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        viewModel.endWorkout(
+                            name = finishSessionName,
+                            notes = finishNotes,
+                            exhaustion = exhaustionLevel,
+                            satisfaction = satisfactionLevel
+                        )
+                        showFinishDialog = false
+                        isTimerRunning = false
+                        restTimeSeconds = 0
+                        finishSessionName = ""
+                        finishNotes = ""
+                        exhaustionLevel = 3
+                        satisfactionLevel = 3
+                    }) {
+                        Text("SAVE & FINISH")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showFinishDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
         // Rest Timer UI
         AnimatedVisibility(
             visible = isTimerRunning && restTimeSeconds > 0,
@@ -210,7 +346,7 @@ fun WorkoutScreen() {
         }
 
         // Add Data Form (Only show if date is valid)
-        if (isWorkoutDateValid) {
+        if (isWorkoutDateValid && isWorkingOut) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -293,6 +429,18 @@ fun WorkoutScreen() {
                         )
                     }
 
+                    val wInput = weight.trim().toDoubleOrNull() ?: 0.0
+                    val rInput = reps.trim().toDoubleOrNull() ?: 0.0
+                    if (wInput > 0 && rInput > 0) {
+                        val oneRm = if (rInput == 1.0) wInput else wInput * (1 + 0.0333 * rInput)
+                        Text(
+                            text = "Estimated 1RM: ${((oneRm * 10.0).roundToInt() / 10.0)} kg",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
+
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
@@ -342,7 +490,7 @@ fun WorkoutScreen() {
                     }
                 }
             }
-        } else {
+        } else if (!isWorkoutDateValid) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
@@ -357,32 +505,162 @@ fun WorkoutScreen() {
         }
 
         Divider()
-        Text("Sets Logged:", fontWeight = FontWeight.SemiBold)
+        val sessions by viewModel.sessionsForDate.collectAsState()
 
-        // List of Logged Workouts
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(workouts) { workout ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(workout.exerciseName, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                            Text("${workout.weight} kg x ${workout.reps} reps", color = MaterialTheme.colorScheme.primary)
+        if (isWorkingOut) {
+            Text("Current Session Sets:", fontWeight = FontWeight.SemiBold)
+            LazyColumn(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(workouts) { workout ->
+                    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Column {
+                                Text(workout.exerciseName, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                val w = workout.weight
+                                val r = workout.reps
+                                val rmText = if (w > 0 && r > 0) {
+                                    val calcRm = if (r == 1) w else w * (1 + 0.0333 * r)
+                                    " (1RM: ${((calcRm * 10.0).roundToInt() / 10.0)} kg)"
+                                } else ""
+                                Text("${w} kg x ${r} reps$rmText", color = MaterialTheme.colorScheme.primary)
+                            }
+                            if (isWorkoutDateValid) {
+                                IconButton(onClick = { viewModel.deleteWorkout(workout.id) }) {
+                                    Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                                }
+                            }
                         }
-                        if (isWorkoutDateValid) {
-                            IconButton(onClick = { viewModel.deleteWorkout(workout.id) }) {
-                                Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
+        } else {
+            val workoutsBySession = workouts.groupBy { it.sessionId }
+            val matchedSessionIds = mutableSetOf<Int?>()
+            
+            Text("Logged Sessions:", fontWeight = FontWeight.SemiBold)
+            
+            LazyColumn(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Show Sessions
+                items(sessions) { session ->
+                    val sessionWorkouts = workoutsBySession[session.sessionId] ?: emptyList()
+                    matchedSessionIds.add(session.sessionId)
+                    
+                    var expanded by remember { mutableStateOf(false) }
+                    Card(
+                        modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp), 
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(session.sessionName.ifBlank { "Session ${session.sessionId}" }, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                    val mm = session.durationSeconds / 60
+                                    val ss = session.durationSeconds % 60
+                                    Text("${sessionWorkouts.size} sets • Duration: $mm min $ss sec", color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (session.exhaustionLevel > 0) {
+                                        Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+                                        Text(session.exhaustionLevel.toString(), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        Spacer(Modifier.width(4.dp))
+                                    }
+                                    Icon(
+                                        imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                                        contentDescription = "Expand"
+                                    )
+                                }
+                            }
+                            
+                            AnimatedVisibility(visible = expanded) {
+                                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    if (session.notes.isNotBlank()) {
+                                        Text("Notes:", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                        Text(session.notes, fontSize = 14.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
+                                        Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f))
+                                    }
+
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Column {
+                                            Text("Exhaustion", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                                            Row { (1..5).forEach { i -> Icon(Icons.Filled.Star, null, modifier = Modifier.size(12.dp), tint = if (i <= session.exhaustionLevel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline) } }
+                                        }
+                                        Column {
+                                            Text("Satisfaction", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                                            Row { (1..5).forEach { i -> Icon(Icons.Filled.Star, null, modifier = Modifier.size(12.dp), tint = if (i <= session.satisfactionLevel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline) } }
+                                        }
+                                    }
+                                    
+                                    Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f))
+
+                                    sessionWorkouts.forEach { workout ->
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                            Column {
+                                                Text(workout.exerciseName, fontWeight = FontWeight.SemiBold)
+                                                Text("${workout.weight} kg x ${workout.reps} reps", fontSize = 14.sp)
+                                            }
+                                            if (isWorkoutDateValid) {
+                                                IconButton(onClick = { viewModel.deleteWorkout(workout.id) }) {
+                                                    Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+                                                }
+                                            }
+                                        }
+                                        if (workout != sessionWorkouts.last()) Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                                    }
+                                    Spacer(Modifier.height(8.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Show Uncategorized (any workouts whose sessionId was NOT in the sessions list)
+                val unmatchedIds = workoutsBySession.keys.filter { it !in matchedSessionIds }
+                if (unmatchedIds.isNotEmpty()) {
+                    item {
+                        var expanded by remember { mutableStateOf(false) }
+                        val unmatchedWorkouts = unmatchedIds.flatMap { workoutsBySession[it] ?: emptyList() }
+                        
+                        Card(
+                            modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp), 
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text("Uncategorized Sets", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                        Text("${unmatchedWorkouts.size} sets", color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
+                                    }
+                                    Icon(
+                                        imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                                        contentDescription = "Expand"
+                                    )
+                                }
+                                AnimatedVisibility(visible = expanded) {
+                                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        unmatchedWorkouts.forEach { workout ->
+                                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                                Column {
+                                                    Text(workout.exerciseName, fontWeight = FontWeight.SemiBold)
+                                                    Text("${workout.weight} kg x ${workout.reps} reps", fontSize = 14.sp)
+                                                }
+                                                if (isWorkoutDateValid) {
+                                                    IconButton(onClick = { viewModel.deleteWorkout(workout.id) }) {
+                                                        Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+                                                    }
+                                                }
+                                            }
+                                            if (workout != unmatchedWorkouts.last()) Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                                        }
+                                        Spacer(Modifier.height(8.dp))
+                                    }
+                                }
                             }
                         }
                     }

@@ -13,7 +13,7 @@ object HealthCalculator {
      * @param isMale True if male, false if female
      * @return The daily calorie goal (maintenance TDEE) rounded to the nearest integer.
      */
-    fun calculateTdee(age: Int, weight: Double, height: Double, isMale: Boolean): Int {
+    fun calculateTdee(age: Int, weight: Double, height: Double, isMale: Boolean, workoutDays: Int = 3, goal: String = "Maintain"): Int {
         if (age <= 0 || weight <= 0.0 || height <= 0.0) return 2000 // Default fallback
 
         // Mifflin-St Jeor Equation for BMR
@@ -23,7 +23,19 @@ object HealthCalculator {
             (10 * weight) + (6.25 * height) - (5 * age) - 161
         }
         
-        // Multiplier for moderate activity (1.55)
-        return (bmr * 1.55).roundToInt()
+        val activityMultiplier = when {
+            workoutDays <= 1 -> 1.2
+            workoutDays <= 3 -> 1.375
+            workoutDays <= 5 -> 1.55
+            else -> 1.725
+        }
+        
+        val tdee = (bmr * activityMultiplier).roundToInt()
+        
+        return when (goal) {
+            "Cut" -> (tdee - 400).coerceAtLeast(1200)
+            "Bulk" -> tdee + 400
+            else -> tdee
+        }
     }
 }

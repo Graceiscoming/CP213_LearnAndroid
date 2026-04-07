@@ -164,6 +164,40 @@
     *   การสืบค้นข้อมูลตามช่วงเวลา (Start/End of Day) ต้องแม่นยำไม่เหลื่อมกัน
 *   **Robust Architecture:** ปรับปรุง `SessionManager` ให้รองรับการทำ Unit Test ได้ดีขึ้น (Make it open for testing)
 
+
+**วันที่อัปเดต:** 7 เมษายน 2026
+
+### 🚀 อัปเกรดระบบ Workout Session & Performance Tracker (Phase 4.0)
+เปลี่ยนหน้าจด Workout แบบเดิมให้กลายเป็นระบบ Tracking มืออาชีพที่ติดตามทุกวินาทีของการซ้อม
+
+#### 1. ระบบจัดการ Workout Session (Start/Stop Workout)
+*   **Active Tracking:** เพิ่มปุ่ม **Start Workout** เพื่อเริ่มนับเวลาในการซ้อมจริง (Session-based)
+*   **Real-time Stopwatch:** นาฬิกาจับเวลา ⏱ แสดงที่ส่วนบนของหน้าจอเมื่ออยู่ในโหมดซ้อม เพื่อความแม่นยำในการพักและฝึกซ้อม
+*   **Session-Specific Logging:** ทุกเซต (Sets) ที่บันทึกในโหมดนี้ จะถูกผูกติด (Link) เข้ากับไอดีของเซสชันนั้นๆ ทันที ทำให้สามารถแยกข้อมูลการซ้อมเช้า-เย็นได้ชัดเจน
+
+#### 2. หน้าสรุปข้อมูลก่อนและหลังการซ้อม (Dashboard & Feedback)
+*   **Pre-Workout Stats:** ส่วนบนของหน้า Workout จะโชว์สรุปแคลอรี่ของวันนี้ (เป้าหมาย vs ที่กินไปแล้ว) ก่อนเริ่มฝึกซ้อม
+*   **Workout Summary Form (Finish Mode):** เมื่อกดปุ่ม Finish แอปจะเปิดหน้าต่างให้จดสรุปความรู้สึกหลังซ้อม:
+    *   **Custom Session Name:** ตั้งชื่อรอบได้ (เช่น "Leg Day สุดโหด") หรือจะใช้ชื่อวันที่อัตโนมัติ
+    *   **Notes:** บันทึกข้อความสั้นๆ เกี่ยวกับฟอร์มการเล่นหรือสิ่งที่อยากปรับปรุง
+    *   **Performance Ratings:** บันทึกระดับความเหนื่อยและความพึงพอใจ (Rating 1-5 Stars ⭐️) โดยใช้ไอคอนดาวที่สวยงามและ Minimalist
+
+#### 3. ปรับปรุง UI/UX แบบ Minimalist Clean (Expandable List)
+*   **Grouped Sessions:** รายการ Workout ถูกเปลี่ยนเป็นแบบกล่อง Sessions ที่สวยงามและสะอาดตา ทั้งในหน้า **Workout** และหน้า **History** (ประวัติย้อนหลัง)
+*   **Expand/Collapse:** ผู้ใช้สามารถกดที่กล่องเพื่อกางดูรายละเอียดท่าออกกำลังกาย, โน้ตที่จดไว้, และระดับคะแนนดาวที่บันทึกไว้ในอดีตได้ครบถ้วน
+*   **Uncategorized Sets:** ระบบจัดการชุดข้อมูลที่ไม่มีไอดีเซสชัน (Legacy Data) โดยการรวมไว้ในกลุ่ม "Uncategorized" เพื่อป้องกันข้อมูลสูญหาย
+
+#### 4. การจัดการฐานข้อมูลและสถาปัตยกรรม (Core & Database)
+*   **Unified History View:** อัปเดต `HistoryViewModel` และ `HistoryScreen` ให้รองรับการดึงข้อมูล Session ย้อนหลัง ทำให้ประสบการณ์การใช้งานลื่นไหลและต่อเนื่องกันทั้งแอป
+*   **Database Migration (Version 8 -> 10):**
+    *   เพิ่มตาราง `workout_sessions` เพื่อเก็บ metadata ของแต่ละรอบการซ้อม
+    *   ปรับปรุง `workout_log` ให้รองรับการเชื่อมโยง Session ID
+    *   เพิ่ม Migration Logic เพื่อป้องกันข้อมูลสูญหายระหว่างการอัปเกรดแอป
+*   **Security & Bug Fixes:**
+    *   **Username Consistency:** แก้ไข Bug เรื่องชื่อผู้ใช้ (Username) ระหว่างการ Update ข้อมูลเซสชัน ทำให้ข้อมูลไม่หายเมื่อบันทึกผล
+    *   **Robust State Management:** ปรับปรุง Flow การดึงข้อมูลให้แม่นยำขึ้น แก้ไขปัญหา Error "Unresolved reference" ของไอคอนต่างๆ
+
 ---
+
 
 

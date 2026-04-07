@@ -30,6 +30,8 @@ fun OnboardingScreen(onComplete: () -> Unit) {
     var weight by remember { mutableStateOf("") }
     var height by remember { mutableStateOf("") }
     var isMale by remember { mutableStateOf(true) }
+    var workoutDays by remember { mutableStateOf(3f) }
+    var goal by remember { mutableStateOf("Maintain") }
 
     var showError by remember { mutableStateOf(false) }
 
@@ -88,6 +90,30 @@ fun OnboardingScreen(onComplete: () -> Unit) {
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
         )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Text("Primary Goal", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            listOf("Cut", "Maintain", "Bulk").forEach { g ->
+                FilterChip(
+                    selected = goal == g,
+                    onClick = { goal = g },
+                    label = { Text(g) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text("Workout Days per Week: ${workoutDays.toInt()}", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        Slider(
+            value = workoutDays,
+            onValueChange = { workoutDays = it },
+            valueRange = 0f..7f,
+            steps = 6,
+            modifier = Modifier.fillMaxWidth()
+        )
 
         if (showError) {
             Text("Please enter valid numbers for all fields", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
@@ -103,7 +129,8 @@ fun OnboardingScreen(onComplete: () -> Unit) {
 
                 if (a > 0 && w > 0 && h > 0) {
                     showError = false
-                    val tdeeResult = HealthCalculator.calculateTdee(a, w, h, isMale)
+                    val days = workoutDays.toInt()
+                    val tdeeResult = HealthCalculator.calculateTdee(a, w, h, isMale, days, goal)
 
                     coroutineScope.launch {
                         val user = UserEntity(
@@ -112,8 +139,10 @@ fun OnboardingScreen(onComplete: () -> Unit) {
                             isMale = isMale,
                             weight = w,
                             height = h,
-                            dailyGoal = tdeeResult, // TDEE is Maintenance daily goal
-                            profileSetup = true
+                            dailyGoal = tdeeResult, // Calculated with goal and days
+                            profileSetup = true,
+                            goal = goal,
+                            workoutDays = days
                         )
                         repository.updateUser(user)
                         onComplete()

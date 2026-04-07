@@ -8,6 +8,7 @@ import com.example.glarmto.data.local.entity.NutritionEntity
 import com.example.glarmto.data.local.entity.RoutineEntity
 import com.example.glarmto.data.local.entity.UserEntity
 import com.example.glarmto.data.local.entity.WorkoutEntity
+import com.example.glarmto.data.local.entity.WorkoutSessionEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -32,6 +33,19 @@ interface GlarmToDao {
 
     @Query("DELETE FROM workout_log WHERE id = :id")
     fun deleteWorkout(id: Int): Int
+
+    // Workout Session Queries
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertWorkoutSession(session: WorkoutSessionEntity): Long
+
+    @androidx.room.Update
+    fun updateWorkoutSession(session: WorkoutSessionEntity): Int
+
+    @Query("SELECT * FROM workout_sessions WHERE dateInMillis >= :startOfDay AND dateInMillis <= :endOfDay AND username = :username ORDER BY startTimeInMillis DESC")
+    fun getWorkoutSessionsForDate(startOfDay: Long, endOfDay: Long, username: String): Flow<List<WorkoutSessionEntity>>
+
+    @Query("SELECT * FROM workout_log WHERE sessionId = :sessionId ORDER BY id ASC")
+    fun getWorkoutsForSession(sessionId: Int): Flow<List<WorkoutEntity>>
 
     // Nutrition Queries
     @Query("SELECT * FROM nutrition_log WHERE dateInMillis >= :startOfDay AND dateInMillis <= :endOfDay AND username = :username ORDER BY id ASC")

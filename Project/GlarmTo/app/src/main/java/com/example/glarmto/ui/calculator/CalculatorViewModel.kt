@@ -21,11 +21,11 @@ class CalculatorViewModel(
     val currentUser: StateFlow<UserEntity?> = repository.getUserFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    fun updateProfile(age: Int, weight: Double, height: Double, isMale: Boolean, restSeconds: Int) {
+    fun updateProfile(age: Int, weight: Double, height: Double, isMale: Boolean, restSeconds: Int, workoutDays: Int, goal: String) {
         viewModelScope.launch {
             val user = currentUser.value
             if (user != null) {
-                val tdeeResult = HealthCalculator.calculateTdee(age, weight, height, isMale)
+                val tdeeResult = HealthCalculator.calculateTdee(age, weight, height, isMale, workoutDays, goal)
                 
                 repository.updateUser(user.copy(
                     age = age,
@@ -33,7 +33,9 @@ class CalculatorViewModel(
                     height = height,
                     isMale = isMale,
                     dailyGoal = tdeeResult,
-                    defaultRestSeconds = restSeconds
+                    defaultRestSeconds = restSeconds,
+                    workoutDays = workoutDays,
+                    goal = goal
                 ))
             }
         }

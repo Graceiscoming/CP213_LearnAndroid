@@ -50,6 +50,19 @@ class HistoryViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    @kotlinx.coroutines.ExperimentalCoroutinesApi
+    val sessions: StateFlow<List<com.example.glarmto.data.local.entity.WorkoutSessionEntity>> = _selectedDate
+        .flatMapLatest { date ->
+            repository.getWorkoutSessionsForDay(date)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun deleteWorkout(id: Int) {
+        viewModelScope.launch {
+            repository.deleteWorkout(id)
+        }
+    }
+
     fun setSelectedDate(date: Long) {
         val cal = Calendar.getInstance().apply {
             timeInMillis = date

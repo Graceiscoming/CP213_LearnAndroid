@@ -17,5 +17,7 @@ data class UserEntity(
     val level: Int = 1,
     val defaultRestSeconds: Int = 60,
     val dailyXPEarned: Long = 0,
-    val lastXPDate: Long = 0
+    val lastXPDate: Long = 0,
+    val goal: String = "Maintain",
+    val workoutDays: Int = 3
 )

@@ -10,5 +10,6 @@ data class WorkoutEntity(
     val weight: Double,
     val reps: Int,
     val dateInMillis: Long,
-    val username: String = "admin"
+    val username: String = "admin",
+    val sessionId: Int? = null
 )
