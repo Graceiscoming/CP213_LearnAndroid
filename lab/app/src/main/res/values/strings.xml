@@ -5,4 +5,12 @@
     <string name="title_activity_menu">MenuActivity</string>
     <string name="title_activity_shared_preferences">SharedPreferences</string>
     <string name="title_activity_pokedex">PokedexActivity</string>
+    <string name="title_activity_part1_animationactivity">Part1Animationactivity</string>
+    <string name="title_activity_part2">Part2Activity</string>
+    <string name="title_activity_part3">Part3Activity</string>
+    <string name="title_activity_part4">Part4Activity</string>
+    <string name="title_activity_part5">Part5Activity</string>
+    <string name="title_activity_part6_avtivity">Part6Avtivity</string>
+    <string name="title_activity_part7">Part7Activity</string>
+    <string name="title_activity_part8">Part8Activity</string>
 </resources>

@@ -16,6 +16,51 @@
         android:theme="@style/Theme._517LabLearnAndroid"
         tools:targetApi="31">
         <activity
+            android:name=".Part8Activity"
+            android:exported="false"
+            android:label="@string/title_activity_part8"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+        <activity
+            android:name=".Part7Activity"
+            android:exported="false"
+            android:label="@string/title_activity_part7"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+        <activity
+            android:name=".Part7DetailActivity"
+            android:exported="false"
+            android:label="Part 7 Detail"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+        <activity
+            android:name=".Part6Avtivity"
+            android:exported="false"
+            android:label="@string/title_activity_part6_avtivity"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+        <activity
+            android:name=".Part5Activity"
+            android:exported="false"
+            android:label="@string/title_activity_part5"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+        <activity
+            android:name=".Part4Activity"
+            android:exported="false"
+            android:label="@string/title_activity_part4"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+        <activity
+            android:name=".Part3Activity"
+            android:exported="false"
+            android:label="@string/title_activity_part3"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+        <activity
+            android:name=".Part2Activity"
+            android:exported="false"
+            android:label="@string/title_activity_part2"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+        <activity
+            android:name=".Part1Animationactivity"
+            android:exported="false"
+            android:label="@string/title_activity_part1_animationactivity"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+        <activity
             android:name=".PokedexActivity"
             android:exported="false"
             android:label="@string/title_activity_pokedex"
