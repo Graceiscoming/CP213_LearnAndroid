@@ -120,6 +120,34 @@ fun MenuScreen(
             transitionType = "[Slide In Right]",
             onClick = { onNavigate(Part8Activity::class.java, R.anim.slide_in_right, R.anim.slide_out_left) }
         )
+
+        // Part 9: Collapsing Lab - LargeTopAppBar
+        MenuButton(
+            title = "Collapsing Toolbar Lab",
+            transitionType = "[Zoom In Transition]",
+            onClick = { onNavigate(Part9Activity::class.java, R.anim.zoom_in, R.anim.zoom_out) }
+        )
+
+        // Part 10: App Widget Lab - Jetpack Glance
+        MenuButton(
+            title = "App Widget Lab (Glance)",
+            transitionType = "[Fade Transition]",
+            onClick = { onNavigate(Part10Activity::class.java, R.anim.fade_in, R.anim.fade_out) }
+        )
+
+        // Part 11: Skeleton Loading Lab - Shimmer
+        MenuButton(
+            title = "Skeleton Loading Lab (Shimmer)",
+            transitionType = "[Slide In Left]",
+            onClick = { onNavigate(Part11Activity::class.java, R.anim.slide_in_left, R.anim.slide_out_right) }
+        )
+
+        // Part 12: Overlays Lab - Sheet & Dialog
+        MenuButton(
+            title = "Overlays Lab (Sheet & Dialog)",
+            transitionType = "[Zoom In Transition]",
+            onClick = { onNavigate(Part12Activity::class.java, R.anim.zoom_in, R.anim.zoom_out) }
+        )
     }
 }
 

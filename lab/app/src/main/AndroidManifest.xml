@@ -16,6 +16,39 @@
         android:theme="@style/Theme._517LabLearnAndroid"
         tools:targetApi="31">
         <activity
+            android:name=".Part10Activity"
+            android:exported="false"
+            android:label="App Widget Lab"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+        <activity
+            android:name=".Part11Activity"
+            android:exported="false"
+            android:label="Skeleton Lab"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+        <activity
+            android:name=".Part12Activity"
+            android:exported="false"
+            android:label="Overlays Lab"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+
+        <receiver
+            android:name=".SimpleWidgetReceiver"
+            android:exported="true"
+            android:label="517Lab Glance Widget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/simple_widget_info" />
+        </receiver>
+
+        <activity
+            android:name=".Part9Activity"
+            android:exported="false"
+            android:label="Collapsing Lab"
+            android:theme="@style/Theme._517LabLearnAndroid" />
+        <activity
             android:name=".Part8Activity"
             android:exported="false"
             android:label="@string/title_activity_part8"

@@ -12,6 +12,7 @@ mockk = "1.13.12"
 kotlinxCoroutinesTest = "1.9.0"
 turbine = "1.1.0"
 androidxArchCoreTesting = "2.2.0"
+glance = "1.1.0"
 
 
 [libraries]
@@ -20,6 +21,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-glance = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
