@@ -37,10 +37,26 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
 
+import android.os.Build
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Force highest available refresh rate (e.g., 120Hz or 144Hz) for smooth Compose animations
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            window?.let { win ->
+                val modes = win.windowManager.defaultDisplay.supportedModes
+                val maxMode = modes.maxByOrNull { it.refreshRate }
+                if (maxMode != null) {
+                    val attrs = win.attributes
+                    attrs.preferredDisplayModeId = maxMode.modeId
+                    win.attributes = attrs
+                }
+            }
+        }
+
         setContent {
             GlarmToTheme {
                 val application = applicationContext as GlarmToApplication
