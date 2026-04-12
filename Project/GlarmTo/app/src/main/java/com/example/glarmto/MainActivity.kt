@@ -34,6 +34,8 @@ import com.example.glarmto.ui.nutrition.NutritionScreen
 import com.example.glarmto.ui.theme.GlarmToTheme
 import com.example.glarmto.ui.workout.WorkoutScreen
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,7 +114,14 @@ fun MainScreen(startDestination: String) {
         }
         }
     ) { innerPadding ->
-        NavHost(navController, startDestination = startDestination, Modifier.padding(innerPadding)) {
+        NavHost(
+            navController = navController, 
+            startDestination = startDestination, 
+            Modifier
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
+                .imePadding()
+        ) {
             composable("login") { 
                 LoginScreen(onLoginSuccess = {
                     val dest = if (application.repository.isProfileSetup()) Screen.Dashboard.route else "onboarding"

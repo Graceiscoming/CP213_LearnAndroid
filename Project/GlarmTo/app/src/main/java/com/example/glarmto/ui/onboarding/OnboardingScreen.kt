@@ -1,7 +1,9 @@
 package com.example.glarmto.ui.onboarding
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,13 +37,17 @@ fun OnboardingScreen(onComplete: () -> Unit) {
 
     var showError by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
         Text("Welcome, $username! 👋", fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         Text("Let's set up your profile to calculate your calorie needs.", textAlign = androidx.compose.ui.text.style.TextAlign.Center)
@@ -155,5 +161,6 @@ fun OnboardingScreen(onComplete: () -> Unit) {
         ) {
             Text("Save Profile & Continue", fontSize = 16.sp)
         }
+    }
     }
 }

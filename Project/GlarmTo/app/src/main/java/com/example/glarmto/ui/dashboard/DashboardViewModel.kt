@@ -96,8 +96,9 @@ class DashboardViewModel(
                 putExtra(Intent.EXTRA_TEXT, text)
                 putExtra(Intent.EXTRA_SUBJECT, "GlarmTo backup (JSON)")
             }
-            send.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            application.startActivity(Intent.createChooser(send, "Export JSON"))
+            val chooser = Intent.createChooser(send, "Export JSON")
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            application.startActivity(chooser)
         }
     }
 
@@ -110,8 +111,9 @@ class DashboardViewModel(
                 putExtra(Intent.EXTRA_TEXT, text)
                 putExtra(Intent.EXTRA_SUBJECT, "GlarmTo backup (CSV)")
             }
-            send.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            application.startActivity(Intent.createChooser(send, "Export CSV"))
+            val chooser = Intent.createChooser(send, "Export CSV")
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            application.startActivity(chooser)
         }
     }
 

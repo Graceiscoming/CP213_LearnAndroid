@@ -94,12 +94,14 @@ fun NutritionScreen() {
         }
     }
 
-    Column(
+    LazyColumn(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+            .fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         // Header Section with Date and Daily Goal
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -281,13 +283,11 @@ fun NutritionScreen() {
         }
 
         Divider()
+            }
+        }
 
         // List of eaten foods today
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(nutritions) { item ->
+        items(nutritions) { item ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -312,5 +312,4 @@ fun NutritionScreen() {
                 }
             }
         }
-    }
 }

@@ -42,7 +42,10 @@ fun CalculatorScreen() {
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("My Profile", "1RM Calculator", "Plate load")
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
         TabRow(selectedTabIndex = selectedTab) {
             tabs.forEachIndexed { index, title ->
                 Tab(
@@ -387,7 +390,7 @@ fun OneRepMaxCalculator() {
 
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
     ) {
         Text("1RM Calculator", fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text("Estimate your 1-rep max (Epley formula)", style = MaterialTheme.typography.bodyMedium)

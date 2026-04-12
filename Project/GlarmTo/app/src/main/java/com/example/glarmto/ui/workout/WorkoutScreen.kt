@@ -55,6 +55,7 @@ fun WorkoutScreen() {
     val elapsedSeconds by viewModel.elapsedSeconds.collectAsState()
     val user by viewModel.userFlow.collectAsState()
     val nutrition by viewModel.todayNutrition.collectAsState()
+    val sessions by viewModel.sessionsForDate.collectAsState()
 
     var exerciseName by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
@@ -125,12 +126,14 @@ fun WorkoutScreen() {
         }
     }
 
-    Column(
+    LazyColumn(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+            .fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (!isWorkingOut) {
             val totalCal = nutrition.sumOf { it.calories }
             val goalCal = user?.dailyGoal ?: 2500
@@ -523,12 +526,14 @@ fun WorkoutScreen() {
         }
 
         Divider()
-        val sessions by viewModel.sessionsForDate.collectAsState()
+            }
+        }
 
         if (isWorkingOut) {
-            Text("Current Session Sets:", fontWeight = FontWeight.SemiBold)
-            LazyColumn(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(workouts) { workout ->
+            item {
+                Text("Current Session Sets:", fontWeight = FontWeight.SemiBold)
+            }
+            items(workouts) { workout ->
                     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Column {
@@ -550,16 +555,15 @@ fun WorkoutScreen() {
                         }
                     }
                 }
-            }
         } else {
             val workoutsBySession = workouts.groupBy { it.sessionId }
             val matchedSessionIds = mutableSetOf<Int?>()
             
-            Text("Logged Sessions:", fontWeight = FontWeight.SemiBold)
-            
-            LazyColumn(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                // Show Sessions
-                items(sessions) { session ->
+            item {
+                Text("Logged Sessions:", fontWeight = FontWeight.SemiBold)
+            }
+            // Show Sessions
+            items(sessions) { session ->
                     val sessionWorkouts = workoutsBySession[session.sessionId] ?: emptyList()
                     matchedSessionIds.add(session.sessionId)
                     
@@ -688,7 +692,6 @@ fun WorkoutScreen() {
                 }
             }
         }
-    }
 
     if (showRoutineDialog && customRoutines.isNotEmpty()) {
         AlertDialog(
