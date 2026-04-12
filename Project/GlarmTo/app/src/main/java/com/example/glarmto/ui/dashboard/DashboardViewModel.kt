@@ -1,7 +1,7 @@
 package com.example.glarmto.ui.dashboard
 
 import android.app.Application
-import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -10,19 +10,24 @@ import com.example.glarmto.data.local.entity.NutritionEntity
 import com.example.glarmto.data.local.entity.UserEntity
 import com.example.glarmto.data.local.entity.WorkoutEntity
 import com.example.glarmto.data.repository.GlarmToRepository
+import com.example.glarmto.data.repository.PeriodTrainingStats
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
 class DashboardViewModel(
     private val application: Application,
-    repository: GlarmToRepository
+    private val repository: GlarmToRepository
 ) : AndroidViewModel(application) {
 
     val user: StateFlow<UserEntity?> = repository.getUserFlow()
@@ -50,6 +55,65 @@ class DashboardViewModel(
 
     val todayNutrition: StateFlow<List<NutritionEntity>> = repository.getNutritionForDay(getTodayStartMillis())
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val todayWaterMl: StateFlow<Int> = repository.getWaterForDay(getTodayStartMillis())
+        .map { list -> list.sumOf { it.amountMl } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val waterGoalMl: StateFlow<Int> = user
+        .map { it?.dailyWaterGoalMl ?: 2000 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 2000)
+
+    val trainingStreakDays: StateFlow<Int> = repository.getTodayWorkouts()
+        .flatMapLatest {
+            flow { emit(repository.getTrainingStreakDays()) }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    private val _statsPeriodDays = MutableStateFlow(7)
+    val statsPeriodDays: StateFlow<Int> = _statsPeriodDays.asStateFlow()
+
+    fun setStatsPeriodDays(days: Int) {
+        _statsPeriodDays.value = if (days >= 20) 30 else 7
+    }
+
+    val periodTrainingStats: StateFlow<PeriodTrainingStats> = combine(
+        repository.getUserFlow(),
+        repository.getTodayWorkouts(),
+        _statsPeriodDays
+    ) { _, _, days -> days }
+        .flatMapLatest { days ->
+            flow { emit(repository.getPeriodTrainingStats(days)) }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), PeriodTrainingStats(0.0, 0))
+
+    fun shareExportJson() {
+        viewModelScope.launch {
+            val text = repository.exportUserDataJson()
+            if (text.isBlank()) return@launch
+            val send = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, text)
+                putExtra(Intent.EXTRA_SUBJECT, "GlarmTo backup (JSON)")
+            }
+            send.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            application.startActivity(Intent.createChooser(send, "Export JSON"))
+        }
+    }
+
+    fun shareExportCsv() {
+        viewModelScope.launch {
+            val text = repository.exportUserDataCsv()
+            if (text.isBlank()) return@launch
+            val send = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, text)
+                putExtra(Intent.EXTRA_SUBJECT, "GlarmTo backup (CSV)")
+            }
+            send.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            application.startActivity(Intent.createChooser(send, "Export CSV"))
+        }
+    }
 
     val weeklyVolume: StateFlow<List<Pair<String, Double>>> = repository.getUserFlow()
         .flatMapLatest { user ->

@@ -1,12 +1,12 @@
 package com.example.glarmto.ui.dashboard
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.LocalDrink
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
@@ -35,6 +35,11 @@ fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: () -> Unit =
     val user by viewModel.user.collectAsState()
     val dailyGoal by viewModel.dailyGoal.collectAsState()
     val weeklyVolume by viewModel.weeklyVolume.collectAsState()
+    val trainingStreak by viewModel.trainingStreakDays.collectAsState()
+    val periodStats by viewModel.periodTrainingStats.collectAsState()
+    val statsPeriodDays by viewModel.statsPeriodDays.collectAsState()
+    val todayWater by viewModel.todayWaterMl.collectAsState()
+    val waterGoal by viewModel.waterGoalMl.collectAsState()
 
     val level = user?.level ?: 1
     val xp = user?.xp ?: 0
@@ -99,6 +104,82 @@ fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: () -> Unit =
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(onClick = { viewModel.shareExportJson() }, modifier = Modifier.weight(1f)) {
+                    Text("Export JSON", fontSize = 12.sp)
+                }
+                OutlinedButton(onClick = { viewModel.shareExportCsv() }, modifier = Modifier.weight(1f)) {
+                    Text("Export CSV", fontSize = 12.sp)
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Training insights", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("Current streak: $trainingStreak day(s) with at least one set", fontWeight = FontWeight.SemiBold)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        FilterChip(
+                            selected = statsPeriodDays == 7,
+                            onClick = { viewModel.setStatsPeriodDays(7) },
+                            label = { Text("7 days") }
+                        )
+                        FilterChip(
+                            selected = statsPeriodDays == 30,
+                            onClick = { viewModel.setStatsPeriodDays(30) },
+                            label = { Text("30 days") }
+                        )
+                    }
+                    Text(
+                        "Volume: ${"%.0f".format(periodStats.totalVolume)} kg · Sets: ${periodStats.totalSets}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.LocalDrink, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(8.dp))
+                        Column {
+                            Text("Water today", fontWeight = FontWeight.Bold)
+                            Text("$todayWater / $waterGoal ml", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                    LinearProgressIndicator(
+                        progress = {
+                            if (waterGoal > 0) (todayWater.toFloat() / waterGoal).coerceIn(0f, 1f) else 0f
+                        },
+                        modifier = Modifier
+                            .width(120.dp)
+                            .height(10.dp)
+                    )
+                }
+            }
         }
 
         // Workout Summary

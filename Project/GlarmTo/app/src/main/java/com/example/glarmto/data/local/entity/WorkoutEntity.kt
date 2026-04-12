@@ -11,5 +11,7 @@ data class WorkoutEntity(
     val reps: Int,
     val dateInMillis: Long,
     val username: String = "admin",
-    val sessionId: Int? = null
+    val sessionId: Int? = null,
+    /** Rate of perceived exertion (1–10), optional. */
+    val rpe: Int? = null
 )

@@ -10,10 +10,11 @@ import com.example.glarmto.data.local.dao.GlarmToDao
 import com.example.glarmto.data.local.entity.NutritionEntity
 import com.example.glarmto.data.local.entity.RoutineEntity
 import com.example.glarmto.data.local.entity.UserEntity
+import com.example.glarmto.data.local.entity.WaterEntity
 import com.example.glarmto.data.local.entity.WorkoutEntity
 import com.example.glarmto.data.local.entity.WorkoutSessionEntity
 
-@Database(entities = [WorkoutEntity::class, NutritionEntity::class, UserEntity::class, RoutineEntity::class, WorkoutSessionEntity::class], version = 10, exportSchema = false)
+@Database(entities = [WorkoutEntity::class, NutritionEntity::class, UserEntity::class, RoutineEntity::class, WorkoutSessionEntity::class, WaterEntity::class], version = 11, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun glarmToDao(): GlarmToDao
@@ -97,6 +98,19 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE user_log ADD COLUMN macroProteinPct INTEGER NOT NULL DEFAULT 30")
+                db.execSQL("ALTER TABLE user_log ADD COLUMN macroCarbPct INTEGER NOT NULL DEFAULT 40")
+                db.execSQL("ALTER TABLE user_log ADD COLUMN macroFatPct INTEGER NOT NULL DEFAULT 30")
+                db.execSQL("ALTER TABLE user_log ADD COLUMN dailyWaterGoalMl INTEGER NOT NULL DEFAULT 2000")
+                db.execSQL("ALTER TABLE workout_log ADD COLUMN rpe INTEGER")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `water_log` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `username` TEXT NOT NULL, `dateInMillis` INTEGER NOT NULL, `amountMl` INTEGER NOT NULL)"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -104,7 +118,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "glarmto_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
                 .build()
                 INSTANCE = instance
                 instance

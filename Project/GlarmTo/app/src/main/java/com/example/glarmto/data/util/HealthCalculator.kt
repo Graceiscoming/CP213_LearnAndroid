@@ -38,4 +38,29 @@ object HealthCalculator {
             else -> tdee
         }
     }
+
+    /**
+     * Grams of each macro from daily calories and percentage split (4 kcal/g protein & carb, 9 kcal/g fat).
+     * Percentages are normalized if they do not sum to 100.
+     */
+    fun macroGramsFromCalories(
+        dailyCalories: Int,
+        proteinPct: Int,
+        carbPct: Int,
+        fatPct: Int
+    ): Triple<Int, Int, Int> {
+        if (dailyCalories <= 0) return Triple(0, 0, 0)
+        val sum = (proteinPct + carbPct + fatPct).coerceAtLeast(1)
+        val p = proteinPct.toDouble() / sum
+        val c = carbPct.toDouble() / sum
+        val f = fatPct.toDouble() / sum
+        val pCal = dailyCalories * p
+        val cCal = dailyCalories * c
+        val fCal = dailyCalories * f
+        return Triple(
+            (pCal / 4.0).roundToInt(),
+            (cCal / 4.0).roundToInt(),
+            (fCal / 9.0).roundToInt()
+        )
+    }
 }

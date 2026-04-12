@@ -13,12 +13,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.glarmto.GlarmToApplication
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(onLoginSuccess: () -> Unit) {
     val context = LocalContext.current
     val application = context.applicationContext as GlarmToApplication
     val repository = application.repository
+    val scope = rememberCoroutineScope()
 
     var username by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
@@ -74,8 +76,10 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
             onClick = {
                 val user = username.trim()
                 if (user.isNotEmpty()) {
-                    repository.login(user)
-                    onLoginSuccess()
+                    scope.launch {
+                        repository.login(user)
+                        onLoginSuccess()
+                    }
                 } else {
                     isError = true
                 }

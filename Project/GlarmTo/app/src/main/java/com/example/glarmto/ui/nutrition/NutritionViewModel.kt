@@ -1,13 +1,14 @@
 package com.example.glarmto.ui.nutrition
 
 import android.app.Application
-import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.glarmto.data.local.entity.NutritionEntity
+import com.example.glarmto.data.local.entity.WaterEntity
 import com.example.glarmto.data.repository.GlarmToRepository
+import com.example.glarmto.data.util.CalendarDayUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,8 +29,16 @@ class NutritionViewModel(
         .map { it?.dailyGoal ?: 2500 }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 2500)
 
-    private val _selectedDate = MutableStateFlow(Calendar.getInstance().timeInMillis)
+    val userFlow: StateFlow<com.example.glarmto.data.local.entity.UserEntity?> = repository.getUserFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    private val _selectedDate = MutableStateFlow(CalendarDayUtils.localTodayStartMillis())
     val selectedDate: StateFlow<Long> = _selectedDate.asStateFlow()
+
+    @kotlinx.coroutines.ExperimentalCoroutinesApi
+    val waterEntries: StateFlow<List<WaterEntity>> = _selectedDate
+        .flatMapLatest { date -> repository.getWaterForDay(date) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     @kotlinx.coroutines.ExperimentalCoroutinesApi
     val nutritionList: StateFlow<List<NutritionEntity>> = _selectedDate
@@ -40,8 +49,8 @@ class NutritionViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun setSelectedDate(dateMillis: Long) {
-        _selectedDate.value = dateMillis
+    fun setSelectedDateFromMaterialPicker(utcPickerMillis: Long) {
+        _selectedDate.value = CalendarDayUtils.localDayStartFromMaterialPickerUtc(utcPickerMillis)
     }
 
     fun updateDailyGoal(goal: Int) {
@@ -67,6 +76,24 @@ class NutritionViewModel(
     fun deleteNutrition(id: Int) {
         viewModelScope.launch {
             repository.deleteNutrition(id)
+        }
+    }
+
+    fun addWater(amountMl: Int) {
+        viewModelScope.launch {
+            repository.insertWater(amountMl, _selectedDate.value)
+        }
+    }
+
+    fun deleteWater(id: Int) {
+        viewModelScope.launch {
+            repository.deleteWater(id)
+        }
+    }
+
+    fun copyMealsFromYesterday() {
+        viewModelScope.launch {
+            repository.copyNutritionFromPreviousDay(_selectedDate.value)
         }
     }
 }

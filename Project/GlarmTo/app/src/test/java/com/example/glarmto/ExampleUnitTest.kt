@@ -1,17 +1,14 @@
 package com.example.glarmto
 
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
-import org.junit.Assert.*
-
 /**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
+ * Smoke test — full suite runs with `./gradlew test` from the GlarmTo module.
  */
 class ExampleUnitTest {
     @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+    fun project_tests_are_enabled() {
+        assertTrue(true)
     }
 }

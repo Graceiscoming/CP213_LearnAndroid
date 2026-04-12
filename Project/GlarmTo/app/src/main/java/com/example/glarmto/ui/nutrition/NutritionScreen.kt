@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.glarmto.GlarmToApplication
+import com.example.glarmto.data.util.CalendarDayUtils
+import com.example.glarmto.data.util.HealthCalculator
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -37,6 +39,8 @@ fun NutritionScreen() {
     val nutritions by viewModel.nutritionList.collectAsState()
     val dailyGoal by viewModel.dailyGoal.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
+    val user by viewModel.userFlow.collectAsState()
+    val waterEntries by viewModel.waterEntries.collectAsState()
 
     var foodName by remember { mutableStateOf("") }
     var calories by remember { mutableStateOf("") }
@@ -48,17 +52,16 @@ fun NutritionScreen() {
     val totalConsumed = nutritions.sumOf { it.calories }
     val progress = if (dailyGoal > 0) (totalConsumed.toFloat() / dailyGoal).coerceIn(0f, 1f) else 0f
     val remaining = (dailyGoal - totalConsumed).coerceAtLeast(0)
+    val totalWater = waterEntries.sumOf { it.amountMl }
+    val waterGoal = user?.dailyWaterGoalMl ?: 2000
+    val (pG, cG, fG) = user?.let { u ->
+        HealthCalculator.macroGramsFromCalories(dailyGoal, u.macroProteinPct, u.macroCarbPct, u.macroFatPct)
+    } ?: Triple(0, 0, 0)
 
     val isNutritionDateValid = remember(selectedDate) {
-        val cal = Calendar.getInstance()
-        val todayStart = cal.apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
-        val nextWeekEnd = todayStart + (8 * 24 * 60 * 60 * 1000L) - 1
-        selectedDate in todayStart..nextWeekEnd
+        val (start, end) = CalendarDayUtils.nutritionEditableLocalRange()
+        val day = CalendarDayUtils.normalizeToLocalDayStart(selectedDate)
+        day in start..end
     }
 
     var showDatePicker by remember { mutableStateOf(false) }
@@ -66,15 +69,8 @@ fun NutritionScreen() {
         initialSelectedDateMillis = selectedDate,
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                val cal = Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply {
-                    set(Calendar.HOUR_OF_DAY, 0)
-                    set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
-                    set(Calendar.MILLISECOND, 0)
-                }
-                val todayUtc = cal.timeInMillis
-                val nextWeekUtc = todayUtc + (7 * 24 * 60 * 60 * 1000L)
-                return utcTimeMillis <= nextWeekUtc
+                val localDay = CalendarDayUtils.localDayStartFromMaterialPickerUtc(utcTimeMillis)
+                return CalendarDayUtils.isMillisInNutritionEditableRange(localDay)
             }
         }
     )
@@ -85,7 +81,7 @@ fun NutritionScreen() {
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let {
-                        viewModel.setSelectedDate(it)
+                        viewModel.setSelectedDateFromMaterialPicker(it)
                     }
                     showDatePicker = false
                 }) { Text("OK") }
@@ -156,6 +152,11 @@ fun NutritionScreen() {
                     }
                 }
             }
+            if (isNutritionDateValid) {
+                TextButton(onClick = { viewModel.copyMealsFromYesterday() }) {
+                    Text("Copy yesterday", maxLines = 1)
+                }
+            }
         }
 
         // Progress Bar
@@ -171,6 +172,49 @@ fun NutritionScreen() {
                         .fillMaxWidth()
                         .height(12.dp)
                 )
+                user?.let { u ->
+                    Text(
+                        "Macro split: ${u.macroProteinPct}% P / ${u.macroCarbPct}% C / ${u.macroFatPct}% F → ~${pG}g / ${cG}g / ${fG}g (edit in Profile)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Water (this day)", fontWeight = FontWeight.Bold)
+                Text("$totalWater / $waterGoal ml", fontWeight = FontWeight.SemiBold)
+                LinearProgressIndicator(
+                    progress = {
+                        if (waterGoal > 0) (totalWater.toFloat() / waterGoal).coerceIn(0f, 1f) else 0f
+                    },
+                    modifier = Modifier.fillMaxWidth().height(10.dp)
+                )
+                if (isNutritionDateValid) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { viewModel.addWater(250) }) { Text("+250 ml") }
+                        Button(onClick = { viewModel.addWater(500) }) { Text("+500 ml") }
+                    }
+                }
+                waterEntries.forEach { w ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("${w.amountMl} ml", style = MaterialTheme.typography.bodyMedium)
+                        if (isNutritionDateValid) {
+                            IconButton(onClick = { viewModel.deleteWater(w.id) }) {
+                                Icon(Icons.Filled.Delete, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    }
+                }
             }
         }
 

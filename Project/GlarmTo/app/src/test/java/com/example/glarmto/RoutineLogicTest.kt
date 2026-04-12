@@ -1,9 +1,19 @@
 package com.example.glarmto
 
+import com.example.glarmto.data.local.entity.RoutineEntity
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class RoutineLogicTest {
+
+    @Test
+    fun `routine entity exercises roundtrip`() {
+        val names = listOf("Bench Press", "Squat", "Deadlift")
+        val joined = names.joinToString("|")
+        val entity = RoutineEntity(id = 0, username = "u", routineName = "Push", exercises = joined)
+        val parsed = entity.exercises.split("|")
+        assertEquals(names, parsed)
+    }
 
     @Test
     fun `test routine exercises string joining and splitting`() {

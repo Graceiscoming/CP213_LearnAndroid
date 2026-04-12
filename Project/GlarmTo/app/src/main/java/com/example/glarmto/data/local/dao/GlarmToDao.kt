@@ -7,6 +7,7 @@ import androidx.room.Query
 import com.example.glarmto.data.local.entity.NutritionEntity
 import com.example.glarmto.data.local.entity.RoutineEntity
 import com.example.glarmto.data.local.entity.UserEntity
+import com.example.glarmto.data.local.entity.WaterEntity
 import com.example.glarmto.data.local.entity.WorkoutEntity
 import com.example.glarmto.data.local.entity.WorkoutSessionEntity
 import kotlinx.coroutines.flow.Flow
@@ -44,8 +45,8 @@ interface GlarmToDao {
     @Query("SELECT * FROM workout_sessions WHERE dateInMillis >= :startOfDay AND dateInMillis <= :endOfDay AND username = :username ORDER BY startTimeInMillis DESC")
     fun getWorkoutSessionsForDate(startOfDay: Long, endOfDay: Long, username: String): Flow<List<WorkoutSessionEntity>>
 
-    @Query("SELECT * FROM workout_log WHERE sessionId = :sessionId ORDER BY id ASC")
-    fun getWorkoutsForSession(sessionId: Int): Flow<List<WorkoutEntity>>
+    @Query("SELECT * FROM workout_log WHERE sessionId = :sessionId AND username = :username ORDER BY id ASC")
+    fun getWorkoutsForSession(sessionId: Int, username: String): Flow<List<WorkoutEntity>>
 
     // Nutrition Queries
     @Query("SELECT * FROM nutrition_log WHERE dateInMillis >= :startOfDay AND dateInMillis <= :endOfDay AND username = :username ORDER BY id ASC")
@@ -66,4 +67,35 @@ interface GlarmToDao {
 
     @Query("DELETE FROM routine_log WHERE id = :id")
     fun deleteRoutine(id: Int): Int
+
+    // Water
+    @Query("SELECT * FROM water_log WHERE dateInMillis >= :startOfDay AND dateInMillis <= :endOfDay AND username = :username ORDER BY id ASC")
+    fun getWaterForDate(startOfDay: Long, endOfDay: Long, username: String): Flow<List<WaterEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertWater(water: WaterEntity): Long
+
+    @Query("DELETE FROM water_log WHERE id = :id")
+    fun deleteWater(id: Int): Int
+
+    // One-shot reads (export / stats). Blocking List queries — call only from Dispatchers.IO
+    // (Room+KSP can emit invalid Java for suspend DAO methods alongside other overloads.)
+    @Query("SELECT * FROM workout_log WHERE username = :username ORDER BY dateInMillis ASC, id ASC")
+    fun getAllWorkoutsForUser(username: String): List<WorkoutEntity>
+
+    @Query("SELECT * FROM nutrition_log WHERE username = :username ORDER BY dateInMillis ASC, id ASC")
+    fun getAllNutritionForUser(username: String): List<NutritionEntity>
+
+    @Query("SELECT * FROM water_log WHERE username = :username ORDER BY dateInMillis ASC, id ASC")
+    fun getAllWaterForUser(username: String): List<WaterEntity>
+
+    @Query(
+        "SELECT * FROM workout_log WHERE username = :username AND dateInMillis >= :start AND dateInMillis <= :end ORDER BY id ASC"
+    )
+    fun getWorkoutsBetween(username: String, start: Long, end: Long): List<WorkoutEntity>
+
+    @Query(
+        "SELECT * FROM nutrition_log WHERE username = :username AND dateInMillis >= :start AND dateInMillis <= :end ORDER BY id ASC"
+    )
+    fun getNutritionBetween(username: String, start: Long, end: Long): List<NutritionEntity>
 }

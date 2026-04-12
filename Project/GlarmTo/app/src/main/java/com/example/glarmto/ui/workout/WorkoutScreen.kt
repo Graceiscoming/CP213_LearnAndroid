@@ -59,6 +59,7 @@ fun WorkoutScreen() {
     var exerciseName by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var reps by remember { mutableStateOf("") }
+    var rpe by remember { mutableStateOf("") }
 
     var routineQueue by remember { mutableStateOf(listOf<String>()) }
     var showRoutineDialog by remember { mutableStateOf(false) }
@@ -111,7 +112,7 @@ fun WorkoutScreen() {
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let {
-                        viewModel.setSelectedDate(it)
+                        viewModel.setSelectedDateFromMaterialPicker(it)
                     }
                     showDatePicker = false
                 }) { Text("OK") }
@@ -332,7 +333,7 @@ fun WorkoutScreen() {
                     set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
                 }.timeInMillis || selectedDate > System.currentTimeMillis()) {
                     TextButton(
-                        onClick = { viewModel.setSelectedDate(System.currentTimeMillis()) },
+                        onClick = { viewModel.setSelectedDateFromLocalInstant(System.currentTimeMillis()) },
                         contentPadding = PaddingValues(0.dp),
                         modifier = Modifier.height(32.dp)
                     ) {
@@ -428,6 +429,14 @@ fun WorkoutScreen() {
                             modifier = Modifier.weight(1f)
                         )
                     }
+                    OutlinedTextField(
+                        value = rpe,
+                        onValueChange = { rpe = it.filter { ch -> ch.isDigit() }.take(2) },
+                        label = { Text("RPE (1–10, optional)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
 
                     val wInput = weight.trim().toDoubleOrNull() ?: 0.0
                     val rInput = reps.trim().toDoubleOrNull() ?: 0.0
@@ -451,7 +460,8 @@ fun WorkoutScreen() {
                                 val r = reps.trim().toIntOrNull() ?: 0
 
                                 if (exerciseName.isNotBlank() && w > 0 && r > 0) {
-                                    viewModel.addWorkout(exerciseName.trim(), w, r)
+                                    val rpeVal = rpe.trim().toIntOrNull()?.coerceIn(1, 10)
+                                    viewModel.addWorkout(exerciseName.trim(), w, r, rpeVal)
                                     
                                     // Start Rest Timer (using user's default)
                                     val dr = defaultRestTime
@@ -462,6 +472,7 @@ fun WorkoutScreen() {
                                     // Keep exercise name but clear weight/reps for next set
                                     weight = ""
                                     reps = ""
+                                    rpe = ""
                                     focusManager.clearFocus()
                                 }
                             },
@@ -479,6 +490,7 @@ fun WorkoutScreen() {
                                     exerciseName = lastWorkout.exerciseName
                                     weight = lastWorkout.weight.toString()
                                     reps = lastWorkout.reps.toString()
+                                    rpe = lastWorkout.rpe?.toString() ?: ""
                                 }
                             },
                             modifier = Modifier.weight(1f)
@@ -487,6 +499,12 @@ fun WorkoutScreen() {
                             Spacer(Modifier.width(4.dp))
                             Text("Copy Last")
                         }
+                    }
+                    OutlinedButton(
+                        onClick = { viewModel.copyWorkoutsFromYesterday() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Copy all sets from yesterday")
                     }
                 }
             }
@@ -521,7 +539,8 @@ fun WorkoutScreen() {
                                     val calcRm = if (r == 1) w else w * (1 + 0.0333 * r)
                                     " (1RM: ${((calcRm * 10.0).roundToInt() / 10.0)} kg)"
                                 } else ""
-                                Text("${w} kg x ${r} reps$rmText", color = MaterialTheme.colorScheme.primary)
+                                val rpeTxt = workout.rpe?.let { pr -> " · RPE $pr" } ?: ""
+                                Text("${w} kg x ${r} reps$rmText$rpeTxt", color = MaterialTheme.colorScheme.primary)
                             }
                             if (isWorkoutDateValid) {
                                 IconButton(onClick = { viewModel.deleteWorkout(workout.id) }) {
@@ -599,7 +618,8 @@ fun WorkoutScreen() {
                                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                             Column {
                                                 Text(workout.exerciseName, fontWeight = FontWeight.SemiBold)
-                                                Text("${workout.weight} kg x ${workout.reps} reps", fontSize = 14.sp)
+                                                val rpeTxt = workout.rpe?.let { pr -> " · RPE $pr" } ?: ""
+                                                Text("${workout.weight} kg x ${workout.reps} reps$rpeTxt", fontSize = 14.sp)
                                             }
                                             if (isWorkoutDateValid) {
                                                 IconButton(onClick = { viewModel.deleteWorkout(workout.id) }) {
@@ -648,7 +668,8 @@ fun WorkoutScreen() {
                                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                                 Column {
                                                     Text(workout.exerciseName, fontWeight = FontWeight.SemiBold)
-                                                    Text("${workout.weight} kg x ${workout.reps} reps", fontSize = 14.sp)
+                                                    val rpeTxt = workout.rpe?.let { pr -> " · RPE $pr" } ?: ""
+                                                    Text("${workout.weight} kg x ${workout.reps} reps$rpeTxt", fontSize = 14.sp)
                                                 }
                                                 if (isWorkoutDateValid) {
                                                     IconButton(onClick = { viewModel.deleteWorkout(workout.id) }) {

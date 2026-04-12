@@ -21,22 +21,40 @@ class CalculatorViewModel(
     val currentUser: StateFlow<UserEntity?> = repository.getUserFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    fun updateProfile(age: Int, weight: Double, height: Double, isMale: Boolean, restSeconds: Int, workoutDays: Int, goal: String) {
+    fun updateProfile(
+        age: Int,
+        weight: Double,
+        height: Double,
+        isMale: Boolean,
+        restSeconds: Int,
+        workoutDays: Int,
+        goal: String,
+        macroProteinPct: Int,
+        macroCarbPct: Int,
+        macroFatPct: Int,
+        dailyWaterGoalMl: Int
+    ) {
         viewModelScope.launch {
             val user = currentUser.value
             if (user != null) {
                 val tdeeResult = HealthCalculator.calculateTdee(age, weight, height, isMale, workoutDays, goal)
-                
-                repository.updateUser(user.copy(
-                    age = age,
-                    weight = weight,
-                    height = height,
-                    isMale = isMale,
-                    dailyGoal = tdeeResult,
-                    defaultRestSeconds = restSeconds,
-                    workoutDays = workoutDays,
-                    goal = goal
-                ))
+
+                repository.updateUser(
+                    user.copy(
+                        age = age,
+                        weight = weight,
+                        height = height,
+                        isMale = isMale,
+                        dailyGoal = tdeeResult,
+                        defaultRestSeconds = restSeconds,
+                        workoutDays = workoutDays,
+                        goal = goal,
+                        macroProteinPct = macroProteinPct.coerceIn(0, 100),
+                        macroCarbPct = macroCarbPct.coerceIn(0, 100),
+                        macroFatPct = macroFatPct.coerceIn(0, 100),
+                        dailyWaterGoalMl = dailyWaterGoalMl.coerceIn(500, 10000)
+                    )
+                )
             }
         }
     }

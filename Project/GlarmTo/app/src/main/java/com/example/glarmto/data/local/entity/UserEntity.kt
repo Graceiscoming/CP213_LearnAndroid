@@ -19,5 +19,11 @@ data class UserEntity(
     val dailyXPEarned: Long = 0,
     val lastXPDate: Long = 0,
     val goal: String = "Maintain",
-    val workoutDays: Int = 3
+    val workoutDays: Int = 3,
+    /** Macro split (% of calories); should sum to 100 when possible. */
+    val macroProteinPct: Int = 30,
+    val macroCarbPct: Int = 40,
+    val macroFatPct: Int = 30,
+    /** Daily water intake goal in milliliters. */
+    val dailyWaterGoalMl: Int = 2000
 )

@@ -199,5 +199,122 @@
 
 ---
 
+**วันที่อัปเดต:** 12 เมษายน 2026
 
+## ปรับปรุงความถูกต้อง ประสิทธิภาพ และความปลอดภัยของระบบ (Hardening & optimization)
+
+*   **`GlarmToRepository.login`:** เปลี่ยนเป็น `suspend` และรอ `withContext(Dispatchers.IO)` ให้สร้าง/โหลดผู้ใช้จาก Room เสร็จก่อน แล้วค่อย `onLoginSuccess()` จาก `LoginScreen` (แก้ race ที่เคยทำให้ `isProfileSetup()` อ่านค่า prefs ก่อน DB อัปเดต)
+*   **`GlarmToDao.getWorkoutsForSession`:** เพิ่มเงื่อนไข `AND username = :username` และให้ repository ส่ง username ปัจจุบัน — แยกข้อมูลเซตตามเซสชันต่อผู้ใช้ชัดเจน
+*   **`revokeXP` / ลบเซตและมื้ออาหาร:** เมื่อ `deleteWorkout` / `deleteNutrition` จะถอน XP สอดคล้องกับตอนเพิ่ม (10 / 5) และปรับ `dailyXPEarned` เมื่อยังเป็นวันเดียวกับ `lastXPDate`
+*   **`SessionManager.logoutUser`:** ลบคีย์ `profile_setup_<username>` ของผู้ที่ออกระบบด้วย เพื่อลดข้อมูลค้างบนเครื่องแชร์
+*   **`WorkoutViewModel`:** ยกเลิกลูป `while (true)` ตลอดเวลา — ใช้ `Job` จับเวลาเฉพาะตอน `Start Workout` และยกเลิกเมื่อจบ/ `onCleared` (ประหยัด CPU/แบต)
+*   **`CalendarDayUtils`:** แปลงวันจาก Material3 DatePicker (UTC) เป็นต้นวันในโซนเครื่อง, ใช้ร่วมกับ Nutrition (ช่วงแก้ไข + `SelectableDates`), ค่าเริ่มต้นวันใน Nutrition/History/Workout
+*   **`NutritionScreen`:** `SelectableDates` บังคับทั้งขอบล่างและบนด้วยช่วงเดียวกับ `isNutritionDateValid`
+*   **`CalculatorScreen`:** ลบ FQN ที่ซ้ำซ้อน ใช้ `GlarmToApplication` แบบ import เดียว
+*   **`XPLimitAndMidnightTest`:** ย้าย fake ไป `testsupport/TestDoubles.kt` (`RecordingFakeGlarmToDao`, `StaticFakeSessionManager`) และเพิ่มเทส `revokeXP`
+
+## ชุด Unit / JVM tests (`app/src/test`)
+
+รันทั้งโมดูลจากโฟลเดอร์ `GlarmTo`: `./gradlew test`  
+(ต้องตั้ง `JAVA_HOME` และ Android SDK ให้ Gradle ใช้งานได้)
+
+*   **`testsupport/TestDoubles.kt`:** `RecordingFakeGlarmToDao` + `StaticFakeSessionManager` / `MutableFakeSessionManager` สำหรับจำลอง Room และเซสชันโดยไม่ต้องเปิด Emulator
+*   **`CalendarDayUtilsTest`:** ช่วง Nutrition, normalize วัน, แปลง UTC DatePicker → local
+*   **`ExercisePresetsTest`:** รายการท่า sorted / ไม่ซ้ำ / มีหมวดหลัก
+*   **`HealthCalculatorGoalsTest`:** เป้า Cut/Bulk กับ TDEE และ `workoutDays`
+*   **`GlarmToRepositoryTest`:** login ผู้ใช้ใหม่/เก่า, insert/delete workout + XP, `getWorkoutsForSession` กรอง user, สูตร XP threshold
+*   **`XPLimitAndMidnightTest`:** ขอบเขตวัน, cap XP 300, รีเซ็ตข้ามวัน, `revokeXP`
+*   **`SessionManagerRobolectricTest`:** SharedPreferences จริงผ่าน Robolectric
+*   **`WorkoutViewModelRobolectricTest` / `NutritionViewModelRobolectricTest` / `CalculatorViewModelRobolectricTest` / `DashboardViewModelRobolectricTest` / `HistoryViewModelRobolectricTest` / `RoutineViewModelRobolectricTest`:** ViewModel + `MainDispatcherRule` (ที่จำเป็น) + delay สั้นๆ ให้ coroutine จบ
+*   **`RoutineLogicTest`:** ต่อจากเดิม + roundtrip `RoutineEntity` กับ pipe
+*   **`LoginSetupTest`:** TDEE (เดิม)
+*   **`ExampleUnitTest`:** smoke ว่าโปรเจกต์เปิดใช้ unit test
+
+**Dependencies สำหรับเทส:** `kotlinx-coroutines-test`, `lifecycle-runtime-testing`, `androidx.test:core`, `org.robolectric:robolectric` และ `testOptions.unitTests.isIncludeAndroidResources = true` ใน `app/build.gradle.kts`
+
+**Instrumented tests (`connectedAndroidTest`):** ยังใช้ `ExampleInstrumentedTest` ตรวจ package name — รันบนอุปกรณ์/Emulator: `./gradlew connectedDebugAndroidTest`
+
+---
+
+**วันที่อัปเดต:** 12 เมษายน 2026
+
+## ฟีเจอร์ใหม่: ส่งออกข้อมูล, สถิติ, โภชนาการเชิงโครง, น้ำ, Plate calculator, RPE, คัดลอกจากเมื่อวาน (Database v11)
+
+รอบนี้เพิ่มความสามารถใช้งานจริงโดย **ไม่ตัดฟังก์ชันเดิม** — มี migration **10 → 11** สำหรับผู้ใช้ที่อัปเกรดจากแอปเวอร์ชันก่อน
+
+### 1. ฐานข้อมูลและโมเดล (Room v11)
+*   **`user_log`:** เพิ่ม `macroProteinPct`, `macroCarbPct`, `macroFatPct` (ค่าเริ่ม 30 / 40 / 30), `dailyWaterGoalMl` (ค่าเริ่ม 2000 ml)
+*   **`workout_log`:** เพิ่มคอลัมน์ `rpe` (nullable, เก็บ RPE 1–10 ต่อเซต)
+*   **ตาราง `water_log`:** บันทึกน้ำเป็นรายการต่อวันต่อผู้ใช้ (`username`, `dateInMillis`, `amountMl`)
+
+### 2. ส่งออก / สำรองข้อมูล (Export)
+*   **`GlarmToExport`:** สร้างข้อความ **JSON** (รวม user ย่อ, workouts, nutrition, water) และ **CSV** สำหรับนำไปเก็บหรือแชร์
+*   **`GlarmToRepository`:** `exportUserDataJson()`, `exportUserDataCsv()` — ดึงข้อมูลทั้งหมดของผู้ใช้ปัจจุบันจาก Room
+*   **Dashboard:** ปุ่ม **Export JSON** / **Export CSV** เปิด Share sheet (ส่งเป็น plain text)
+
+### 3. สถิติและ streak
+*   **Streak:** นับจำนวนวันติดกันที่มีอย่างน้อยหนึ่งเซต (จาก `workout_log`) โดยเริ่มจากวันนี้หรือเมื่อวานถ้าวันนี้ยังไม่มีเซต
+*   **ช่วงสถิติ:** เลือก **7 วัน** หรือ **30 วัน** — แสดง **ปริมาณ volume รวม (kg)** และ **จำนวนเซต** ในช่วงนั้น
+*   แสดงบน Dashboard ใต้การ์ดสวัสดี / ปุ่ม export
+
+### 4. น้ำดื่ม (Water)
+*   **Repository / DAO:** `getWaterForDay`, `insertWater`, `deleteWater`
+*   **Nutrition:** การ์ดน้ำตามวันที่เลือก — ปุ่ม +250 ml / +500 ml, ลบรายการ, แถบความคืบหน้าเทียบกับ `dailyWaterGoalMl`
+*   **Dashboard:** สรุปน้ำวันนี้เทียบเป้า (ml)
+
+### 5. เป้าหมายมาโคร (สัดส่วนจากแคลอรี่)
+*   **`HealthCalculator.macroGramsFromCalories`:** คำนวณกรัมโปรตีน / คาร์บ / ไขมันจาก `dailyGoal` และเปอร์เซ็นต์ (4 kcal/g สำหรับ P และ C, 9 kcal/g สำหรับ F)
+*   **Profile (แก้ไขโปรไฟล์):** ช่องปรับ % มาโครและเป้าน้ำ (ml/วัน) — บันทึกลง `UserEntity`
+*   **Nutrition:** ข้อความสรุปมาโครโดยประมาณอ้างอิงเป้าแคลอรี่ปัจจุบัน
+
+### 6. Plate calculator
+*   **`PlateCalculator`:** คำนวณโหลดแผ่นต่อข้างแบบ symmetric (บาร์ + แผ่นสองข้าง) แบบ greedy จากขนาดแผ่นที่มี
+*   **แท็บใหม่ใน Profile:** 「Plate load」— กรอกน้ำหนักบาร์, เป้าหมายรวม, รายการแผ่น (kg คั่นด้วยจุลภาค)
+
+### 7. RPE และคัดลอกจากเมื่อวาน
+*   **Workout:** ช่อง **RPE (1–10)** ตอนกด Add Set, แสดงในรายการเซต; ปุ่ม **Copy all sets from yesterday** ดึงเซตของวันก่อนหน้ามาใส่วันที่เลือก (และ session ปัจจุบันถ้ามี) — **ไม่ให้ XP** ตอนคัดลอก
+*   **Nutrition:** ปุ่ม **Copy yesterday** — คัดลอกมื้อจากวันก่อนหน้ามาวันที่เลือก — **ไม่ให้ XP**
+
+### 8. การทดสอบและ test support
+*   **`testsupport/MainDispatcherRule.kt`:** ใช้แทน `androidx.lifecycle.testing.MainDispatcherRule` เพื่อให้ unit test compile ได้เสถียรบน classpath ชุดเดียวกับโปรเจกต์
+*   **`RecordingFakeGlarmToDao`:** รองรับเมธอด DAO ใหม่ (น้ำ, export, ช่วงวันที่)
+*   **`LoginSetupTest` / `DashboardViewModelRobolectricTest`:** ปรับ expected / พฤติกรรม collect ให้ตรงกับ TDEE + multiplier และ `dailyGoal` StateFlow
+*   **`CalculatorViewModelRobolectricTest`:** อัปเดตพารามิเตอร์ `updateProfile` ให้รวมมาโครและเป้าน้ำ
+
+### 9. รายการฟังก์ชัน / API หลักที่เพิ่ม (อ้างอิงโค้ด)
+
+**`com.example.glarmto.data.util`**
+*   **`HealthCalculator.macroGramsFromCalories(dailyCalories, proteinPct, carbPct, fatPct)`** → `Triple<Int,Int,Int>` กรัม P/C/F
+*   **`GlarmToExport.toJson(...)`** / **`GlarmToExport.toCsv(...)`** — สตริงส่งออก
+*   **`PlateCalculator.computeLoad(targetTotalKg, barKg, plateSizesKg)`** → `Result?` และ **`PlateCalculator.isGoodEnough(Result)`**
+
+**`com.example.glarmto.data.repository.GlarmToRepository`**
+*   **`getWaterForDay(dateMillis)`** → `Flow<List<WaterEntity>>`
+*   **`insertWater(amountMl, dateInMillis)`** / **`deleteWater(id)`**
+*   **`exportUserDataJson()`** / **`exportUserDataCsv()`** → `String`
+*   **`getPeriodTrainingStats(daysBackInclusive)`** → **`PeriodTrainingStats`** (volume + จำนวนเซต)
+*   **`getTrainingStreakDays()`** → `Int`
+*   **`copyWorkoutsFromPreviousDay(targetDayMillis, sessionId)`** / **`copyNutritionFromPreviousDay(targetDayMillis)`**
+*   **`insertWorkout(..., awardXp: Boolean = true)`** / **`insertNutrition(..., awardXp: Boolean = true)`** — พารามิเตอร์หลังใช้กันเองตอนคัดลอก (DAO โดยตรงไม่ผ่านสาขานี้)
+
+**`com.example.glarmto.data.local.dao.GlarmToDao`**
+*   **`getWaterForDate`**, **`insertWater`**, **`deleteWater`**
+*   **`getAllWorkoutsForUser`**, **`getAllNutritionForUser`**, **`getAllWaterForUser`**, **`getWorkoutsBetween`**, **`getNutritionBetween`** — แบบ **`fun` คืน `List` (blocking)** เรียกเฉพาะบน `Dispatchers.IO` (หลีกเลี่ยงปัญหา generate ของ Room+KSP กับ `suspend` ชุดเดียวกัน)
+
+**ViewModel / UI (สรุป)**
+*   **`DashboardViewModel`:** `todayWaterMl`, `waterGoalMl`, `trainingStreakDays`, `periodTrainingStats`, `setStatsPeriodDays`, `shareExportJson`, `shareExportCsv` — constructor ใช้ **`private val repository`**
+*   **`WorkoutViewModel`:** **`addWorkout(..., rpe)`**, **`copyWorkoutsFromYesterday()`**
+*   **`NutritionViewModel`:** **`userFlow`**, **`waterEntries`**, **`addWater`**, **`deleteWater`**, **`copyMealsFromYesterday()`**
+*   **`CalculatorViewModel`:** **`updateProfile(..., macroProteinPct, macroCarbPct, macroFatPct, dailyWaterGoalMl)`**
+
+### 10. Unit tests ที่เพิ่มสำหรับฟีเจอร์ใหม่ (`app/src/test/...`)
+
+| ไฟล์ | สิ่งที่ทดสอบ |
+|------|----------------|
+| **`MacroGramsTest.kt`** | `macroGramsFromCalories` — สัดส่วน 30/40/30 ที่ 2000 kcal, กรณีเปอร์เซ็นต์รวม ≠ 100, แคลอรี่ ≤ 0 |
+| **`PlateCalculatorTest.kt`** | โหลดเป้า 100 kg / บาร์ 20 kg, กรณีเป้าเท่าบาร์, กรณีเป้าต่ำกว่าบาร์ |
+| **`GlarmToExportTest.kt`** | `toJson` มี `exportVersion`, `username`, ฟิลด์ workout รวม `rpe`; `toCsv` มีหัวและแถว workout/nutrition/water |
+| **`GlarmToRepositoryFeaturesTest.kt`** | `getPeriodTrainingStats`, `getTrainingStreakDays` (อย่างน้อย 1 วัน), export JSON/CSV, `insertWater` + `getWaterForDay`, `copyWorkoutsFromPreviousDay`, `copyNutritionFromPreviousDay` (ใช้ `RecordingFakeGlarmToDao` + `StaticFakeSessionManager`) |
+
+รวมกับรายการเดิมในหมวด **「ชุด Unit / JVM tests」** ด้านบน — รันทั้งโมดูล: `./gradlew test` จากโฟลเดอร์ `GlarmTo`
 

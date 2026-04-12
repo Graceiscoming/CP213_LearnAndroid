@@ -17,10 +17,10 @@ class LoginSetupTest {
         val height = 175.0
         val isMale = true
 
-        // BMR = (10 * 70) + (6.25 * 175) - (5 * 25) + 5
-        // BMR = 700 + 1093.75 - 125 + 5 = 1673.75
-        // TDEE = 1673.75 * 1.55 = 2594.3125 (Rounded to 2594)
-        val expectedTdee = 2594
+        // BMR = (10 * 70) + (6.25 * 175) - (5 * 25) + 5 = 1673.75
+        // Default workoutDays = 3 → activity multiplier 1.375 (see HealthCalculator)
+        // TDEE = 1673.75 * 1.375 = 2301.40625 → 2301
+        val expectedTdee = 2301
 
         val actualTdee = HealthCalculator.calculateTdee(age, weight, height, isMale)
         
@@ -35,10 +35,9 @@ class LoginSetupTest {
         val height = 160.0
         val isMale = false
 
-        // BMR = (10 * 60) + (6.25 * 160) - (5 * 30) - 161
-        // BMR = 600 + 1000 - 150 - 161 = 1289
-        // TDEE = 1289 * 1.55 = 1997.95 (Rounded to 1998)
-        val expectedTdee = 1998
+        // BMR = 1289; default workoutDays = 3 → multiplier 1.375
+        // TDEE = 1289 * 1.375 = 1772.375 → 1772
+        val expectedTdee = 1772
 
         val actualTdee = HealthCalculator.calculateTdee(age, weight, height, isMale)
         

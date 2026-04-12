@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.glarmto.GlarmToApplication
+import com.example.glarmto.data.util.HealthCalculator
+import com.example.glarmto.data.util.PlateCalculator
 import java.util.Calendar
 import kotlin.math.roundToInt
 
@@ -38,7 +40,7 @@ fun CalculatorScreen() {
     )
 
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("My Profile", "1RM Calculator")
+    val tabs = listOf("My Profile", "1RM Calculator", "Plate load")
 
     Column(modifier = Modifier.fillMaxSize()) {
         TabRow(selectedTabIndex = selectedTab) {
@@ -46,7 +48,7 @@ fun CalculatorScreen() {
                 Tab(
                     selected = selectedTab == index,
                     onClick = { selectedTab = index },
-                    text = { Text(text = title) }
+                    text = { Text(text = title, maxLines = 1) }
                 )
             }
         }
@@ -59,6 +61,7 @@ fun CalculatorScreen() {
             when (selectedTab) {
                 0 -> ProfileEditor(viewModel)
                 1 -> OneRepMaxCalculator()
+                2 -> PlateLoadCalculator()
             }
         }
     }
@@ -67,7 +70,7 @@ fun CalculatorScreen() {
 @Composable
 fun ProfileEditor(viewModel: CalculatorViewModel) {
     val context = LocalContext.current
-    val application = context.applicationContext as com.example.glarmto.GlarmToApplication
+    val application = context.applicationContext as GlarmToApplication
     val user by viewModel.currentUser.collectAsState()
     
     // We only populate these if we enter edit mode, else we show current stats
@@ -80,6 +83,10 @@ fun ProfileEditor(viewModel: CalculatorViewModel) {
     var editRestTime by remember { mutableStateOf("") }
     var editWorkoutDays by remember { mutableStateOf(3f) }
     var editGoal by remember { mutableStateOf("Maintain") }
+    var editMacroP by remember { mutableStateOf("30") }
+    var editMacroC by remember { mutableStateOf("40") }
+    var editMacroF by remember { mutableStateOf("30") }
+    var editWaterGoal by remember { mutableStateOf("2000") }
 
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
@@ -198,7 +205,15 @@ fun ProfileEditor(viewModel: CalculatorViewModel) {
 
                         Divider(modifier = Modifier.padding(vertical = 8.dp))
                         Text("Daily Calorie Target: ${u.dailyGoal} kcal", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
-                        
+                        val (pg, cg, fg) = HealthCalculator.macroGramsFromCalories(
+                            u.dailyGoal, u.macroProteinPct, u.macroCarbPct, u.macroFatPct
+                        )
+                        Text(
+                            "Macros (~grams): ${pg}g P · ${cg}g C · ${fg}g F  (${u.macroProteinPct}% / ${u.macroCarbPct}% / ${u.macroFatPct}%)",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text("Water goal: ${u.dailyWaterGoalMl} ml/day", style = MaterialTheme.typography.bodyMedium)
+
                         Button(onClick = { 
                             editAge = u.age.toString()
                             editWeight = u.weight.toString()
@@ -207,6 +222,10 @@ fun ProfileEditor(viewModel: CalculatorViewModel) {
                             editRestTime = u.defaultRestSeconds.toString()
                             editWorkoutDays = u.workoutDays.toFloat()
                             editGoal = u.goal
+                            editMacroP = u.macroProteinPct.toString()
+                            editMacroC = u.macroCarbPct.toString()
+                            editMacroF = u.macroFatPct.toString()
+                            editWaterGoal = u.dailyWaterGoalMl.toString()
                             isEditing = true 
                         }, modifier = Modifier.padding(top = 8.dp)) {
                             Text("Edit Profile")
@@ -283,6 +302,38 @@ fun ProfileEditor(viewModel: CalculatorViewModel) {
                             modifier = Modifier.fillMaxWidth()
                         )
 
+                        Text("Macro split (% of calories)", fontWeight = FontWeight.Bold)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = editMacroP,
+                                onValueChange = { editMacroP = it.filter { ch -> ch.isDigit() }.take(3) },
+                                label = { Text("Protein %") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                            OutlinedTextField(
+                                value = editMacroC,
+                                onValueChange = { editMacroC = it.filter { ch -> ch.isDigit() }.take(3) },
+                                label = { Text("Carb %") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                            OutlinedTextField(
+                                value = editMacroF,
+                                onValueChange = { editMacroF = it.filter { ch -> ch.isDigit() }.take(3) },
+                                label = { Text("Fat %") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        OutlinedTextField(
+                            value = editWaterGoal,
+                            onValueChange = { editWaterGoal = it.filter { ch -> ch.isDigit() }.take(5) },
+                            label = { Text("Daily water goal (ml)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(onClick = { isEditing = false }, modifier = Modifier.weight(1f)) {
                                 Text("Cancel")
@@ -294,8 +345,24 @@ fun ProfileEditor(viewModel: CalculatorViewModel) {
                                 val h = editHeight.trim().toDoubleOrNull() ?: u.height
                                 val r = editRestTime.trim().toIntOrNull() ?: u.defaultRestSeconds
                                 val days = editWorkoutDays.toInt()
-                                
-                                viewModel.updateProfile(age = a, weight = w, height = h, isMale = editIsMale, restSeconds = r, workoutDays = days, goal = editGoal)
+                                val mp = editMacroP.toIntOrNull() ?: u.macroProteinPct
+                                val mc = editMacroC.toIntOrNull() ?: u.macroCarbPct
+                                val mf = editMacroF.toIntOrNull() ?: u.macroFatPct
+                                val wg = editWaterGoal.toIntOrNull() ?: u.dailyWaterGoalMl
+
+                                viewModel.updateProfile(
+                                    age = a,
+                                    weight = w,
+                                    height = h,
+                                    isMale = editIsMale,
+                                    restSeconds = r,
+                                    workoutDays = days,
+                                    goal = editGoal,
+                                    macroProteinPct = mp,
+                                    macroCarbPct = mc,
+                                    macroFatPct = mf,
+                                    dailyWaterGoalMl = wg
+                                )
                                 isEditing = false
                             }, modifier = Modifier.weight(1f)) {
                                 Text("Save")
@@ -366,6 +433,76 @@ fun OneRepMaxCalculator() {
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun PlateLoadCalculator() {
+    var bar by remember { mutableStateOf("20") }
+    var target by remember { mutableStateOf("100") }
+    var platesStr by remember { mutableStateOf("25,20,15,10,5,2.5,1.25") }
+    var message by remember { mutableStateOf("") }
+    val focusManager = LocalFocusManager.current
+    val scroll = rememberScrollState()
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth().verticalScroll(scroll)
+    ) {
+        Text("Plate load (per side, symmetric)", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(
+            "Bar weight, target total on the bar, and comma-separated plate sizes (kg) available.",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        OutlinedTextField(
+            value = bar,
+            onValueChange = { bar = it },
+            label = { Text("Bar weight (kg)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = target,
+            onValueChange = { target = it },
+            label = { Text("Target total (kg)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = platesStr,
+            onValueChange = { platesStr = it },
+            label = { Text("Plates (kg, comma-separated)") },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 2
+        )
+        Button(
+            onClick = {
+                focusManager.clearFocus()
+                val b = bar.replace(',', '.').trim().toDoubleOrNull() ?: 0.0
+                val t = target.replace(',', '.').trim().toDoubleOrNull() ?: 0.0
+                val plates = platesStr.split(',').mapNotNull { s -> s.trim().replace(',', '.').toDoubleOrNull() }
+                val res = PlateCalculator.computeLoad(t, b, plates)
+                message = when {
+                    res == null -> "Invalid input."
+                    !PlateCalculator.isGoodEnough(res) ->
+                        "Per side target ${"%.2f".format(res.weightPerSideKg)} kg — leftover ~${"%.2f".format(res.residualKg)} kg per side (try more plate sizes or adjust target)."
+                    else -> {
+                        val parts = res.platesPerSide.joinToString(" + ") { (w, n) ->
+                            if (n == 1) "${w} kg" else "${n}×${w} kg"
+                        }
+                        "Per side: ${"%.2f".format(res.weightPerSideKg)} kg → $parts (each side)."
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Calculate")
+        }
+        if (message.isNotBlank()) {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Text(message, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)
             }
         }
     }

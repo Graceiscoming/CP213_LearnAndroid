@@ -19,7 +19,11 @@ open class SessionManager(context: Context?) {
     }
 
     open fun logoutUser() {
-        prefs?.edit()?.remove(KEY_USERNAME)?.apply()
+        val user = getCurrentUser()
+        prefs?.edit()?.apply {
+            user?.let { remove("${KEY_PROFILE_SETUP}_$it") }
+            remove(KEY_USERNAME)
+        }?.apply()
     }
 
     open fun getCurrentUser(): String? {

@@ -7,7 +7,11 @@ import com.example.glarmto.data.local.entity.RoutineEntity
 import com.example.glarmto.data.local.entity.UserEntity
 import com.example.glarmto.data.local.entity.NutritionEntity
 import com.example.glarmto.data.local.entity.WorkoutEntity
+import com.example.glarmto.data.local.entity.WorkoutSessionEntity
 import com.example.glarmto.data.repository.GlarmToRepository
+import com.example.glarmto.data.util.CalendarDayUtils
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,10 +20,13 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() {
+
+    private var stopwatchJob: Job? = null
 
     private val _isWorkingOut = MutableStateFlow(false)
     val isWorkingOut: StateFlow<Boolean> = _isWorkingOut.asStateFlow()
@@ -33,25 +40,7 @@ class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() 
     private val _currentSessionId = MutableStateFlow<Int?>(null)
     val currentSessionId: StateFlow<Int?> = _currentSessionId.asStateFlow()
 
-    init {
-        viewModelScope.launch {
-            while (true) {
-                if (_isWorkingOut.value && _workoutStartTime.value > 0) {
-                    _elapsedSeconds.value = (System.currentTimeMillis() - _workoutStartTime.value) / 1000
-                }
-                kotlinx.coroutines.delay(1000)
-            }
-        }
-    }
-
-    private val _selectedDate = MutableStateFlow(
-        Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
-    )
+    private val _selectedDate = MutableStateFlow(CalendarDayUtils.localTodayStartMillis())
     val selectedDate: StateFlow<Long> = _selectedDate.asStateFlow()
 
     @kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -70,7 +59,7 @@ class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() 
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     @kotlinx.coroutines.ExperimentalCoroutinesApi
-    val sessionsForDate: StateFlow<List<com.example.glarmto.data.local.entity.WorkoutSessionEntity>> = _selectedDate
+    val sessionsForDate: StateFlow<List<WorkoutSessionEntity>> = _selectedDate
         .flatMapLatest { date ->
             repository.getWorkoutSessionsForDay(date)
         }
@@ -89,21 +78,30 @@ class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() 
     val todayNutrition: StateFlow<List<NutritionEntity>> = repository.getTodayNutrition()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun setSelectedDate(dateMillis: Long) {
-        val cal = Calendar.getInstance().apply {
-            timeInMillis = dateMillis
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
+    /** From [androidx.compose.material3.DatePicker] (UTC day start). */
+    fun setSelectedDateFromMaterialPicker(utcPickerMillis: Long) {
+        _selectedDate.value = CalendarDayUtils.localDayStartFromMaterialPickerUtc(utcPickerMillis)
+    }
+
+    /** From "today" button or any local wall-clock instant. */
+    fun setSelectedDateFromLocalInstant(wallMillis: Long) {
+        _selectedDate.value = CalendarDayUtils.normalizeToLocalDayStart(wallMillis)
+    }
+
+    private fun startStopwatchTickerIfNeeded() {
+        stopwatchJob?.cancel()
+        stopwatchJob = viewModelScope.launch {
+            while (isActive && _isWorkingOut.value && _workoutStartTime.value > 0) {
+                _elapsedSeconds.value = (System.currentTimeMillis() - _workoutStartTime.value) / 1000
+                delay(1000)
+            }
         }
-        _selectedDate.value = cal.timeInMillis
     }
 
     fun startWorkout() {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
-            val session = com.example.glarmto.data.local.entity.WorkoutSessionEntity(
+            val session = WorkoutSessionEntity(
                 startTimeInMillis = now,
                 dateInMillis = _selectedDate.value
             )
@@ -112,6 +110,7 @@ class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() 
             _workoutStartTime.value = now
             _elapsedSeconds.value = 0L
             _isWorkingOut.value = true
+            startStopwatchTickerIfNeeded()
         }
     }
 
@@ -131,7 +130,7 @@ class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() 
                 "${sdf.format(java.util.Date(_selectedDate.value))} Workout"
             } else name
 
-            val session = com.example.glarmto.data.local.entity.WorkoutSessionEntity(
+            val session = WorkoutSessionEntity(
                 sessionId = sId,
                 startTimeInMillis = _workoutStartTime.value,
                 endTimeInMillis = now,
@@ -143,7 +142,9 @@ class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() 
                 satisfactionLevel = satisfaction
             )
             repository.updateWorkoutSession(session)
-            
+
+            stopwatchJob?.cancel()
+            stopwatchJob = null
             _isWorkingOut.value = false
             _currentSessionId.value = null
             _workoutStartTime.value = 0L
@@ -151,16 +152,28 @@ class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() 
         }
     }
 
-    fun addWorkout(exerciseName: String, weight: Double, reps: Int) {
+    override fun onCleared() {
+        stopwatchJob?.cancel()
+        super.onCleared()
+    }
+
+    fun addWorkout(exerciseName: String, weight: Double, reps: Int, rpe: Int? = null) {
         viewModelScope.launch {
             val workout = WorkoutEntity(
                 exerciseName = exerciseName,
                 weight = weight,
                 reps = reps,
                 dateInMillis = _selectedDate.value,
-                sessionId = _currentSessionId.value
+                sessionId = _currentSessionId.value,
+                rpe = rpe?.coerceIn(1, 10)
             )
             repository.insertWorkout(workout)
+        }
+    }
+
+    fun copyWorkoutsFromYesterday() {
+        viewModelScope.launch {
+            repository.copyWorkoutsFromPreviousDay(_selectedDate.value, _currentSessionId.value)
         }
     }
 

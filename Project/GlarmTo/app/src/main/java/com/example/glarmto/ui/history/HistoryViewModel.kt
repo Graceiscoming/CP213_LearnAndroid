@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.glarmto.data.local.entity.NutritionEntity
 import com.example.glarmto.data.local.entity.WorkoutEntity
 import com.example.glarmto.data.repository.GlarmToRepository
+import com.example.glarmto.data.util.CalendarDayUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,14 +23,7 @@ class HistoryViewModel(
     private val repository: GlarmToRepository
 ) : AndroidViewModel(application) {
 
-    private val _selectedDate = MutableStateFlow(
-        Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
-    )
+    private val _selectedDate = MutableStateFlow(CalendarDayUtils.localTodayStartMillis())
     val selectedDate: StateFlow<Long> = _selectedDate.asStateFlow()
 
     @kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -64,14 +58,7 @@ class HistoryViewModel(
     }
 
     fun setSelectedDate(date: Long) {
-        val cal = Calendar.getInstance().apply {
-            timeInMillis = date
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        _selectedDate.value = cal.timeInMillis
+        _selectedDate.value = CalendarDayUtils.localDayStartFromMaterialPickerUtc(date)
     }
 }
 
