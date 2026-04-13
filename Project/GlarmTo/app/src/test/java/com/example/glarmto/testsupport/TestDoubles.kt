@@ -57,6 +57,11 @@ class RecordingFakeGlarmToDao : GlarmToDao {
         return if (insertedWorkouts.size < before) 1 else 0
     }
 
+    override fun getLatestWorkoutByName(username: String, name: String): WorkoutEntity? =
+        insertedWorkouts
+            .filter { it.username == username && it.exerciseName == name }
+            .maxByOrNull { it.id }
+
     override fun insertWorkoutSession(session: WorkoutSessionEntity): Long {
         insertedSessions.add(session)
         return nextSessionId++

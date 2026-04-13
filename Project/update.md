@@ -318,3 +318,40 @@
 
 รวมกับรายการเดิมในหมวด **「ชุด Unit / JVM tests」** ด้านบน — รันทั้งโมดูล: `./gradlew test` จากโฟลเดอร์ `GlarmTo`
 
+---
+
+**วันที่อัปเดต:** 13 เมษายน 2026
+
+
+### 1. Haptic Feedback & Confetti Animation (ความสมบูรณ์แบบ / Polish)
+*   **ไฟล์ที่เกี่ยวข้อง**: `build.gradle.kts`, `WorkoutScreen.kt`
+*   **การอัปเดต**: 
+    *   เพิ่ม Library `nl.dionsegijn:konfetti-compose`
+    *   แทรก `LocalHapticFeedback` เมื่อมีการกดปุ่มสำคัญ เช่น ตั้งเวลาพัก หรือบันทึกเซต เพื่อลดปัญหาจืดชืด
+    *   เพิ่มหน้าต่างพลุกระจาย (Confetti Particle System) หลังจากกดปุ่ม **"SAVE & FINISH"** (End Session) ให้ความรู้สึกฉลองความสำเร็จหลังซ้อมเสร็จ
+
+### 2. Smart Coach AI-Progression (การแก้ปัญหาและการใช้งานจริง)
+*   **ไฟล์ที่เกี่ยวข้อง**: `GlarmToDao.kt`, `GlarmToRepository.kt`, `WorkoutViewModel.kt`, `WorkoutScreen.kt`
+*   **การอัปเดต**: 
+    *   เพิ่ม Query `getLatestWorkoutByName` สำหรับหาประวัติการฝึกท่านั้นๆ ในอดีต
+    *   ผูก Logic ใน ViewModel ให้อ่านค่า `RPE` (Rate of Perceived Exertion) ครั้งล่าสุด ถ้าน้อยแสดงว่ายกไหว ระบบจะคำนวณและแสดงข้อความ Suggestion แนะนำเพิ่มน้ำหนัก `+2.5 kg` แบบ Real-time ทันทีที่พิมพ์ชื่อท่าเสร็จ
+
+### 3. Muscle Heatmap Activity (ความคิดสร้างสรรค์ & UI Design)
+*   **ไฟล์ที่เกี่ยวข้อง**: `DashboardViewModel.kt`, `DashboardScreen.kt`
+*   **การอัปเดต**:
+    *   ออกแบบ Custom UI ดึงตารางกิจกรรมรายวัน 91 วันย้อนหลัง (13 สัปดาห์)
+    *   วาด Box Grid เรียงแบบ Contribution Graph ของ GitHub โดยเช็คปริมาณ Sets รวมในแต่ละวัน (ซ้อมเบา=สีจาง, ซ้อมหนัก=สีแดดงเข้ม) ประดับตกแต่งหน้า Dashboard ให้ดูโปรเฟสชันแนลระดับบน
+
+### 4. Jetpack Glance Home Widget (การเรียนรู้เทคโนโลยีใหม่ / Advanced Skill)
+*   **ไฟล์ที่เกี่ยวข้อง**: `GlarmToWidget.kt`, `GlarmToWidgetReceiver.kt`, `glarmto_widget_initial.xml`, `glarmto_widget_info.xml`, `AndroidManifest.xml`
+*   **การอัปเดต**:
+    *   เพิ่ม Library `androidx.glance:glance-appwidget`
+    *   สร้าง UI วิดเจ็ตขนาดเล็กที่สามารถวางบน Home Screen ของมือถือ Android ด้วยเทคโนโลยีค่ายใหม่ล่าสุด Glance (Declarative Widget UI ซึ่งใหม่มาก)
+    *   ตั้งค่า Receiver และ AppWidgetProvider ใน AndroidManifest ให้ระบบดึง Widget ไปแสดงบนปลายนิ้วผู้ใช้ได้ตลอดเวลา
+
+### 5. IG Story Social Export (สร้างสรรค์จนสมบูรณ์แบบ / Engagement)
+*   **ไฟล์ที่เกี่ยวข้อง**: `DashboardViewModel.kt`, `DashboardScreen.kt`, `file_paths.xml`, `AndroidManifest.xml`
+*   **การอัปเดต**:
+    *   เขียนฟังก์ชัน `shareToInstagramStory` จัดเตรียมพื้นที่ Canvas และลงพู่กันวาดรูปภาพ Bitmap ขนาดแนวตั้ง (Story Size 1080x1920) แบบ On-The-Fly (วาดตอนกดปุ่ม)
+    *   แนบข้อมูล `Level` และ `Streak (วัน)` เข้าไปในรูปภาพ แล้วเซฟใส่ Cache Folder อย่างรวดเร็ว
+    *   กำหนด `FileProvider` เพื่อยิง Intent รูปนั้นออกนอกกรอบของแอป กระโดดสู่หน้า Share ข้ามไปยัง Story ใน IG หรือแอปโซเชียลอื่นๆ ได้ทันที

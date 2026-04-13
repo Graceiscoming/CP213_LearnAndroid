@@ -57,6 +57,11 @@ class GlarmToRepository(private val dao: GlarmToDao, private val sessionManager:
         return dao.getWorkoutsForDate(start, end, username)
     }
 
+    suspend fun getSmartSuggestion(exerciseName: String): WorkoutEntity? = withContext(Dispatchers.IO) {
+        val username = sessionManager.getCurrentUser() ?: return@withContext null
+        dao.getLatestWorkoutByName(username, exerciseName)
+    }
+
     suspend fun insertWorkout(workout: WorkoutEntity, awardXp: Boolean = true) {
         val username = sessionManager.getCurrentUser() ?: return
         withContext(Dispatchers.IO) {

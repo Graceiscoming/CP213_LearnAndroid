@@ -35,6 +35,9 @@ interface GlarmToDao {
     @Query("DELETE FROM workout_log WHERE id = :id")
     fun deleteWorkout(id: Int): Int
 
+    @Query("SELECT * FROM workout_log WHERE username = :username AND exerciseName = :name ORDER BY id DESC LIMIT 1")
+    fun getLatestWorkoutByName(username: String, name: String): WorkoutEntity?
+
     // Workout Session Queries
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertWorkoutSession(session: WorkoutSessionEntity): Long

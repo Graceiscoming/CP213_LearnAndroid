@@ -61,6 +61,11 @@ dependencies {
     implementation(libs.navigation.compose)
     implementation(libs.lifecycle.viewmodel.compose)
 
+    // New Wow Factor Features
+    implementation(libs.konfetti.compose)
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
+
     testImplementation(libs.junit)
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     testImplementation("androidx.test:core:1.6.1")
