@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
 }
 
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    object Dashboard : Screen("dashboard", "Dashboard", Icons.Filled.Home)
+    object Dashboard : Screen("dashboard", "Home", Icons.Filled.Home)
     object Routines : Screen("routines", "Routines", Icons.Filled.ListAlt)
     object Workout : Screen("workout", "Workout", Icons.Filled.FitnessCenter)
     object Recovery : Screen("recovery", "Recovery", Icons.Filled.BatteryChargingFull)
