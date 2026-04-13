@@ -39,10 +39,10 @@ class VoiceCommandParserTest {
     }
 
     @Test
-    fun testParseInvalidCommandNumbersFirst() {
-        // Our regex expects the exercise name (letters) first.
+    fun testParseValidCommandNumbersFirst() {
+        // Our new heuristic engine allows the exercise name (letters) to be anywhere.
         val result = parseVoiceCommand("100 kg 8 reps for Squat")
-        assertNull(result)
+        assertEquals(Triple("Squat", "100", "8"), result)
     }
 
     @Test

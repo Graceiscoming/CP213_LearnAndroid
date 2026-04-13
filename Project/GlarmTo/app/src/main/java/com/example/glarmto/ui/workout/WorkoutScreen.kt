@@ -84,8 +84,8 @@ fun parseVoiceCommand(command: String): Triple<String, String, String>? {
         val nextWord = textAfter.split(Regex("""\s+""")).firstOrNull()?.replace(Regex("[^a-zก-๙]"), "") ?: ""
         val prevWord = textBeforeStr.split(Regex("""\s+""")).lastOrNull()?.replace(Regex("[^a-zก-๙]"), "") ?: ""
 
-        val isWeightUnit = weightWords.any { nextWord.startsWith(it) || prevWord.endsWith(it) }
-        val isRepUnit = repWords.any { nextWord.startsWith(it) || prevWord.endsWith(it) }
+        val isWeightUnit = weightWords.any { nextWord.startsWith(it) }
+        val isRepUnit = repWords.any { nextWord.startsWith(it) }
 
         // Also check if they said something like "100kg" without space
         val attachedWeight = weightWords.any { textAfter.startsWith(it) }
@@ -142,10 +142,9 @@ fun parseVoiceCommand(command: String): Triple<String, String, String>? {
     // 2. Extract words for Exercise (Remove all numbers and units)
     var textOnly = lowerCommand.replace(numberRegex, " ")
     val allUnits = weightWords + repWords + listOf("for", "with", "ทำ", "เล่น", "น้ำหนัก")
-    allUnits.forEach { unit ->
-        textOnly = textOnly.replace(Regex("\\b$unit\\b", RegexOption.IGNORE_CASE), " ")
-    }
-    textOnly = textOnly.replace(Regex("\\s+"), " ").trim()
+    textOnly = textOnly.split(Regex("\\s+"))
+        .filter { word -> word.isNotBlank() && !allUnits.any { it.equals(word, ignoreCase = true) } }
+        .joinToString(" ")
 
     // 3. Fuzzy match against ExercisePresets
     var finalExercise = textOnly
@@ -163,7 +162,7 @@ fun parseVoiceCommand(command: String): Triple<String, String, String>? {
         }
         
         val pLower = bestMatch?.lowercase(Locale.getDefault()) ?: ""
-        if (bestMatch != null && (pLower.contains(textOnly) || textOnly.contains(pLower) || extractedWords.any { pLower.contains(it) })) {
+        if (bestMatch != null && (pLower.contains(textOnly) || textOnly.contains(pLower))) {
             finalExercise = bestMatch
         } else {
             // Capitalize first letters neatly
@@ -323,8 +322,8 @@ fun WorkoutScreen() {
                 rpe = ""
                 // Auto add set!
                 viewModel.addWorkout(
-                    name = exerciseName,
-                    weight = weight.toFloatOrNull() ?: 0f,
+                    exerciseName = exerciseName,
+                    weight = weight.toDoubleOrNull() ?: 0.0,
                     reps = reps.toIntOrNull() ?: 0,
                     rpe = null
                 )
