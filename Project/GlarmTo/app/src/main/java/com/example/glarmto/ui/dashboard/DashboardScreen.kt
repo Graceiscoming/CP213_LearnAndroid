@@ -40,6 +40,8 @@ fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: () -> Unit =
     val statsPeriodDays by viewModel.statsPeriodDays.collectAsState()
     val todayWater by viewModel.todayWaterMl.collectAsState()
     val waterGoal by viewModel.waterGoalMl.collectAsState()
+    val heatmapData by viewModel.heatmapData.collectAsState()
+    val radarData by viewModel.radarChartData.collectAsState()
 
     val level = user?.level ?: 1
     val xp = user?.xp ?: 0
@@ -108,11 +110,17 @@ fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: () -> Unit =
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                Button(
+                    onClick = { 
+                        val username = application.repository.getCurrentUser() ?: "Guest"
+                        viewModel.shareToInstagramStory(username, level, trainingStreak) 
+                    }, 
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Share to IG Story", fontSize = 12.sp)
+                }
                 OutlinedButton(onClick = { viewModel.shareExportJson() }, modifier = Modifier.weight(1f)) {
                     Text("Export JSON", fontSize = 12.sp)
-                }
-                OutlinedButton(onClick = { viewModel.shareExportCsv() }, modifier = Modifier.weight(1f)) {
-                    Text("Export CSV", fontSize = 12.sp)
                 }
             }
         }
@@ -148,6 +156,33 @@ fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: () -> Unit =
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold
                     )
+                    
+                    if (heatmapData.size == 91) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Contribution Activity", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
+                            for (col in 0 until 13) {
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    for (row in 0 until 7) {
+                                        val index = col * 7 + row
+                                        val sets = heatmapData[index]
+                                        val color = when {
+                                            sets == 0 -> MaterialTheme.colorScheme.surfaceVariant
+                                            sets in 1..2 -> MaterialTheme.colorScheme.primaryContainer
+                                            sets in 3..5 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                                            sets in 6..9 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                                            else -> MaterialTheme.colorScheme.primary
+                                        }
+                                        Box(
+                                            modifier = Modifier
+                                                .size(16.dp)
+                                                .background(color, RoundedCornerShape(3.dp))
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

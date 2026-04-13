@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -29,6 +30,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.glarmto.ui.calculator.CalculatorScreen
 import com.example.glarmto.ui.dashboard.DashboardScreen
+import com.example.glarmto.ui.login.WelcomeScreen
+import com.example.glarmto.ui.login.RegisterScreen
 import com.example.glarmto.ui.login.LoginScreen
 import com.example.glarmto.ui.nutrition.NutritionScreen
 import com.example.glarmto.ui.theme.GlarmToTheme
@@ -67,18 +70,26 @@ class MainActivity : ComponentActivity() {
                         "onboarding"
                     }
                 } else {
-                    "login"
+                    "welcome"
                 }
                 MainScreen(startDest)
             }
         }
     }
+
+    var onUserLeaveHintCallback: (() -> Unit)? = null
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        onUserLeaveHintCallback?.invoke()
+    }
 }
 
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    object Dashboard : Screen("dashboard", "Dashboard", Icons.Filled.Home)
+    object Dashboard : Screen("dashboard", "Home", Icons.Filled.Home)
     object Routines : Screen("routines", "Routines", Icons.Filled.ListAlt)
     object Workout : Screen("workout", "Workout", Icons.Filled.FitnessCenter)
+    object Recovery : Screen("recovery", "Recovery", Icons.Filled.BatteryChargingFull)
     object Nutrition : Screen("nutrition", "Nutrition", Icons.Filled.Fastfood)
     object Calculator : Screen("calculator", "Profile", Icons.Filled.Person)
 }
@@ -93,6 +104,7 @@ fun MainScreen(startDestination: String) {
         Screen.Dashboard,
         Screen.Routines,
         Screen.Workout,
+        Screen.Recovery,
         Screen.Nutrition,
         Screen.Calculator
     )
@@ -102,8 +114,8 @@ fun MainScreen(startDestination: String) {
         bottomBar = {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = navBackStackEntry?.destination
-            // Hide bottom bar on login and onboarding screens
-            if (currentDestination?.route != "login" && currentDestination?.route != "onboarding") {
+            // Hide bottom bar on auth and onboarding screens
+            if (currentDestination?.route != "welcome" && currentDestination?.route != "register" && currentDestination?.route != "login" && currentDestination?.route != "onboarding") {
                 NavigationBar {
                     items.forEach { screen ->
                     NavigationBarItem(
@@ -138,17 +150,38 @@ fun MainScreen(startDestination: String) {
                 .consumeWindowInsets(innerPadding)
                 .imePadding()
         ) {
-            composable("login") { 
-                LoginScreen(onLoginSuccess = {
-                    val dest = if (application.repository.isProfileSetup()) Screen.Dashboard.route else "onboarding"
-                    navController.navigate(dest) {
-                        popUpTo("login") { inclusive = true }
+            composable("welcome") {
+                WelcomeScreen(
+                    onNavigateToLogin = { navController.navigate("login") },
+                    onNavigateToRegister = { navController.navigate("register") }
+                )
+            }
+            composable("register") {
+                RegisterScreen(
+                    onBack = { navController.popBackStack() },
+                    onRegisterSuccess = {
+                        val dest = if (application.repository.isProfileSetup()) Screen.Dashboard.route else "onboarding"
+                        navController.navigate(dest) {
+                            popUpTo("welcome") { inclusive = true }
+                        }
                     }
-                }) 
+                )
+            }
+            composable("login") { 
+                LoginScreen(
+                    onBack = { navController.popBackStack() },
+                    onLoginSuccess = {
+                        val dest = if (application.repository.isProfileSetup()) Screen.Dashboard.route else "onboarding"
+                        navController.navigate(dest) {
+                            popUpTo("welcome") { inclusive = true }
+                        }
+                    }
+                ) 
             }
             composable("onboarding") {
                 com.example.glarmto.ui.onboarding.OnboardingScreen(onComplete = {
                     navController.navigate(Screen.Dashboard.route) {
+                        popUpTo("welcome") { inclusive = true }
                         popUpTo("onboarding") { inclusive = true }
                     }
                 })
@@ -157,8 +190,8 @@ fun MainScreen(startDestination: String) {
                 DashboardScreen(
                     onLogout = {
                         application.repository.logout()
-                        navController.navigate("login") {
-                            popUpTo(Screen.Dashboard.route) { inclusive = true }
+                        navController.navigate("welcome") {
+                            popUpTo(0) { inclusive = true } // Clear the entire backstack completely
                         }
                     },
                     onNavigateToHistory = {
@@ -173,6 +206,7 @@ fun MainScreen(startDestination: String) {
             }
             composable(Screen.Routines.route) { com.example.glarmto.ui.routines.RoutinesScreen() }
             composable(Screen.Workout.route) { WorkoutScreen() }
+            composable(Screen.Recovery.route) { com.example.glarmto.ui.workout.RecoveryScreen() }
             composable(Screen.Nutrition.route) { NutritionScreen() }
             composable(Screen.Calculator.route) { CalculatorScreen() }
         }

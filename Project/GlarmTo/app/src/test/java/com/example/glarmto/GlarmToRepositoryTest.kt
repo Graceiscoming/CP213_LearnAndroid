@@ -29,20 +29,49 @@ class GlarmToRepositoryTest {
     }
 
     @Test
-    fun `login new user inserts row and marks profile not setup`() = runBlocking {
+    fun `register new user inserts row and marks profile not setup`() = runBlocking {
         dao.mockUserFlow.value = null
-        repository.login("newuser")
+        val success = repository.register("newuser", "mypass")
 
-        assertTrue(dao.insertedUsers.any { it.username == "newuser" })
+        assertTrue(success)
+        assertTrue(dao.insertedUsers.any { it.username == "newuser" && it.password == "mypass" })
         assertFalse(session.isProfileSetup())
     }
 
     @Test
-    fun `login existing user copies profileSetup from Room`() = runBlocking {
-        val bob = UserEntity(username = "bob", profileSetup = true)
-        dao.mockUserFlow.value = bob
-        repository.login("bob")
+    fun `register existing user returns false`() = runBlocking {
+        dao.mockUserFlow.value = UserEntity(username = "existing", password = "old")
+        val success = repository.register("existing", "newpassword")
 
+        assertFalse(success)
+    }
+
+    @Test
+    fun `login with correct password copies profileSetup from Room`() = runBlocking {
+        val bob = UserEntity(username = "bob", password = "secretpassword", profileSetup = true)
+        dao.mockUserFlow.value = bob
+        val success = repository.login("bob", "secretpassword")
+
+        assertTrue(success)
+        assertTrue(session.isProfileSetup())
+    }
+
+    @Test
+    fun `login with incorrect password returns false`() = runBlocking {
+        val bob = UserEntity(username = "bob", password = "secretpassword", profileSetup = true)
+        dao.mockUserFlow.value = bob
+        val success = repository.login("bob", "wrongpassword")
+
+        assertFalse(success)
+    }
+
+    @Test
+    fun `login with empty password allows backward compatibility`() = runBlocking {
+        val legacyBob = UserEntity(username = "legacy", password = "", profileSetup = true)
+        dao.mockUserFlow.value = legacyBob
+        val success = repository.login("legacy", "anypassword") // Should pass because db password is ""
+
+        assertTrue(success)
         assertTrue(session.isProfileSetup())
     }
 

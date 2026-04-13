@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "user_log")
 data class UserEntity(
     @PrimaryKey val username: String,
+    val password: String = "",
     val createdAt: Long = System.currentTimeMillis(),
     val age: Int = 0,
     val isMale: Boolean = true,

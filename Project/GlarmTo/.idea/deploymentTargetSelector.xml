@@ -15,6 +15,13 @@
       </SelectionState>
       <SelectionState runConfigName="Tests in 'com.example.glarmto'">
         <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2026-04-12T05:58:42.925478300Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\bette\.android\avd\GlarmToPJ.avd" />
+            </handle>
+          </Target>
+        </DropdownSelection>
         <DialogSelection />
       </SelectionState>
     </selectionStates>

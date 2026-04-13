@@ -318,3 +318,85 @@
 
 รวมกับรายการเดิมในหมวด **「ชุด Unit / JVM tests」** ด้านบน — รันทั้งโมดูล: `./gradlew test` จากโฟลเดอร์ `GlarmTo`
 
+---
+
+**วันที่อัปเดต:** 13 เมษายน 2026
+
+
+### 1. Haptic Feedback & Confetti Animation (ความสมบูรณ์แบบ / Polish)
+*   **ไฟล์ที่เกี่ยวข้อง**: `build.gradle.kts`, `WorkoutScreen.kt`
+*   **การอัปเดต**: 
+    *   เพิ่ม Library `nl.dionsegijn:konfetti-compose`
+    *   แทรก `LocalHapticFeedback` เมื่อมีการกดปุ่มสำคัญ เช่น ตั้งเวลาพัก หรือบันทึกเซต เพื่อลดปัญหาจืดชืด
+    *   เพิ่มหน้าต่างพลุกระจาย (Confetti Particle System) หลังจากกดปุ่ม **"SAVE & FINISH"** (End Session) ให้ความรู้สึกฉลองความสำเร็จหลังซ้อมเสร็จ
+
+### 2. Smart Coach AI-Progression (การแก้ปัญหาและการใช้งานจริง)
+*   **ไฟล์ที่เกี่ยวข้อง**: `GlarmToDao.kt`, `GlarmToRepository.kt`, `WorkoutViewModel.kt`, `WorkoutScreen.kt`
+*   **การอัปเดต**: 
+    *   เพิ่ม Query `getLatestWorkoutByName` สำหรับหาประวัติการฝึกท่านั้นๆ ในอดีต
+    *   ผูก Logic ใน ViewModel ให้อ่านค่า `RPE` (Rate of Perceived Exertion) ครั้งล่าสุด ถ้าน้อยแสดงว่ายกไหว ระบบจะคำนวณและแสดงข้อความ Suggestion แนะนำเพิ่มน้ำหนัก `+2.5 kg` แบบ Real-time ทันทีที่พิมพ์ชื่อท่าเสร็จ
+
+### 3. Muscle Heatmap Activity (ความคิดสร้างสรรค์ & UI Design)
+*   **ไฟล์ที่เกี่ยวข้อง**: `DashboardViewModel.kt`, `DashboardScreen.kt`
+*   **การอัปเดต**:
+    *   ออกแบบ Custom UI ดึงตารางกิจกรรมรายวัน 91 วันย้อนหลัง (13 สัปดาห์)
+    *   วาด Box Grid เรียงแบบ Contribution Graph ของ GitHub โดยเช็คปริมาณ Sets รวมในแต่ละวัน (ซ้อมเบา=สีจาง, ซ้อมหนัก=สีแดดงเข้ม) ประดับตกแต่งหน้า Dashboard ให้ดูโปรเฟสชันแนลระดับบน
+
+### 4. Jetpack Glance Home Widget (การเรียนรู้เทคโนโลยีใหม่ / Advanced Skill)
+*   **ไฟล์ที่เกี่ยวข้อง**: `GlarmToWidget.kt`, `GlarmToWidgetReceiver.kt`, `glarmto_widget_initial.xml`, `glarmto_widget_info.xml`, `AndroidManifest.xml`
+*   **การอัปเดต**:
+    *   เพิ่ม Library `androidx.glance:glance-appwidget`
+    *   สร้าง UI วิดเจ็ตขนาดเล็กที่สามารถวางบน Home Screen ของมือถือ Android ด้วยเทคโนโลยีค่ายใหม่ล่าสุด Glance (Declarative Widget UI ซึ่งใหม่มาก)
+    *   ตั้งค่า Receiver และ AppWidgetProvider ใน AndroidManifest ให้ระบบดึง Widget ไปแสดงบนปลายนิ้วผู้ใช้ได้ตลอดเวลา
+
+### 5. IG Story Social Export (สร้างสรรค์จนสมบูรณ์แบบ / Engagement)
+*   **ไฟล์ที่เกี่ยวข้อง**: `DashboardViewModel.kt`, `DashboardScreen.kt`, `file_paths.xml`, `AndroidManifest.xml`
+*   **การอัปเดต**:
+    *   เขียนฟังก์ชัน `shareToInstagramStory` จัดเตรียมพื้นที่ Canvas และลงพู่กันวาดรูปภาพ Bitmap ขนาดแนวตั้ง (Story Size 1080x1920) แบบ On-The-Fly (วาดตอนกดปุ่ม)
+    *   แนบข้อมูล `Level` และ `Streak (วัน)` เข้าไปในรูปภาพ แล้วเซฟใส่ Cache Folder อย่างรวดเร็ว
+    *   กำหนด `FileProvider` เพื่อยิง Intent รูปนั้นออกนอกกรอบของแอป กระโดดสู่หน้า Share ข้ามไปยัง Story ใน IG หรือแอปโซเชียลอื่นๆ ได้ทันที
+
+
+### 6. Picture-in-Picture (PiP) Rest Timer (สลับแอปก็ยังมีนาฬิกาลอยได้)
+*   **ไฟล์ที่เกี่ยวข้อง**: `AndroidManifest.xml`, `MainActivity.kt`, `WorkoutScreen.kt`
+*   **การอัปเดต**:
+    *   ตั้งค่า `android:supportsPictureInPicture="true"` ในล่วงหน้า
+    *   ดักจับอีเวนท์ระดับระบบ (OS) `onUserLeaveHint` (เมื่อผู้ใช้ย่อแอปหรือสลับไปแอปอื่น)
+    *   เมื่ออยู่ในระหว่างนับเวลาพัก หน้าต่างแอปจะยุบลงมาเหลือแค่ตัวเลขจับเวลาพัก (สีดำล้วน + นาฬิกา) ซ้อนทับบนแอปอื่น เช่น IG หรือ YouTube เพื่อให้เห็นเวลาพักตลอดเวลา
+
+###  7. 3D Radar Chart Analysis (กราฟประเมินกล้ามเนื้อ 5 แฉก)
+*   **ไฟล์ที่เกี่ยวข้อง**: `DashboardViewModel.kt`, `DashboardScreen.kt`
+*   **การอัปเดต**:
+    *   นำประวัติการออกกำลังกาย 30 วันหลังสุด มาทำ **Regex / String Match** แยกคำศัพท์ชื่อท่า เพื่อลงตะกร้า 5 หมวด: Chest, Back, Legs, Arms, Shoulders อย่างอัตโนมัติ
+    *   ใช้ `Android Compose Canvas` ร่างกราฟใยแมงมุม 5 แกน (Spider Web / Radar Chart) แบบ Custom Drawing เต็มระบบ พร้อมใส่เงาและความโปร่งแสงสุดเฉียบ
+    *   ทำให้ผู้ใช้ประเมินสัดส่วนร่างตัวเองได้แบบ Real-time (ถ้าช่วงนี้เล่นแต่อก กราฟขากับหลังก็จะหดลงไป)
+
+### 8. On-Device "Expert" Workout Generator (AI สร้างตารางฝึกออฟไลน์) 🎲🏋️
+*   **ไฟล์ที่เกี่ยวข้อง**: `ExerciseLibrary.kt`, `WorkoutGenerator.kt`, `WorkoutScreen.kt`, `AiWorkoutGeneratorSheet.kt`
+*   **การอัปเดต**:
+    *   สร้างระบบ Rule-based AI Engine ภายในตัวเครื่อง (ไม่ต้องรอโหลดเน็ต) โดยการจับคู่ท่าทาง (Exercise Presets) นำมาผูกกับ Tag อุปกรณ์ และชิ้นส่วนกล้ามเนื้อ
+    *   ปรับหน้าต่างเข้าสู่หน้าจอ Modal Bottom Sheet ให้ผู้ใช้เลื่อนกำหนดเวลาที่มี อุปกรณ์ที่มี และกล้ามเนื้อที่อยากโฟกัส
+    *   Algorithm จะคำนวณหั่นเวลา แบ่งสัดส่วนพัก/ยก และสุ่มจัดท่าพร้อมจำนวนเซต/เรปให้โดยอัตโนมัติ 4-5 ท่า พร้อมเริ่มลุยได้ทันที!
+
+### 9. Muscle Recovery & Fatigue Tracker (ระบบวิเคราะห์ความล้ากล้ามเนื้อ) 🩸🔋
+*   **ไฟล์ที่เกี่ยวข้อง**: `RecoveryViewModel.kt`, `RecoveryScreen.kt`, `MainActivity.kt`
+*   **การอัปเดต**:
+    *   เพิ่มแท็บเมนูล่างอันใหม่ **Recovery** 
+    *   สร้าง Fatigue Math Algorithm ที่แอบไปดึงข้อมูล Room Database 72 ชั่วโมงล่าสุดของตาราง `workout_log` มาคำนวณสะสมความล้า (Damage) และหักล้างกับค่าเวลาพักฟื้น (Time-Decay)
+    *   โชว์ผลลัพธ์ผ่าน Custom Canvas Animation เป็นหลอดพลัง 0-100% จำแนกตามสัดส่วนกล้ามเนื้อ พร้อม AI Recommendation แนะนำว่าวันนี้ควรพักส่วนไหนและควรเล่นส่วนไหนที่ฟื้นตัวเต็มที่แล้ว
+
+### 10. AI Camera & ML Kit "Wow Factors" (ฟีเจอร์พรีเมียมที่ทำเองฟรี 100%) 📷🧠
+*   **ไฟล์ที่เกี่ยวข้อง**: `build.gradle.kts`, `AndroidManifest.xml`, `OpenFoodFactsApi.kt`, `NutritionOcrParser.kt`, `PoseAngleMath.kt`, `CameraScannerScreen.kt`, `AiPoseTrackerScreen.kt`, `WorkoutScreen.kt`, `NutritionScreen.kt`
+*   **การอัปเดต**:
+    *   **Smart Barcode Scanner:** ติดตั้ง `CameraX` คู่กับ `ML Kit Barcode Scanning` เมื่อแสกนบาร์โค้ดขนมปัง ระบบจะยิงหา `OpenFoodFacts API` และดึงข้อมูลแคลอรี่/โปรตีนมากรอกลง Database เราให้อัตโนมัติ!
+    *   **Nutrition Label OCR:** ถ้าไม่มีบาร์โค้ด ให้เล็งกล้องไปที่ตารางโภชนาการหลังซอง `ML Kit Text Recognition` จะกวาดสายตาอ่านหนังสือทั้งหมด แล้วใช้สมการ Regex ดึงตัวเลข "แคลอรี่" ออกมากรอกใส่หน้าจดบันทึกให้เองแบบไม่ต้องพิมพ์
+    *   **AI Form Pose Tracker (Squat Observer):** เปิดกล้องหน้าพร้อมเรียก `ML Kit Pose Detection` วาดเส้นก้างปลา (Skeleton Canvas) มาร์คจุดข้อต่อร่างกายแบบสดๆ เรียลไทม์! พร้อมคลาส `PoseAngleMath` ใช้คณิตศาสตร์เวกเตอร์จับมุมหัวเข่าและสะโพก เพื่อตะโกนบอกฟอร์มการจับ Squat เช่น "ย่อลงอีกนิด (Go Lower!)" หรือ "เยี่ยมมาก (Good Depth!)" เหมือนมี PT ส่วนตัวมานั่งมอง!
+
+### 11. Full Authentication System Overhaul (ยกระดับระบบยืนยันตัวตนแบบเต็มรูปแบบ) 🔐
+*   **ไฟล์ที่เกี่ยวข้อง**: `AppDatabase.kt`, `UserEntity.kt`, `GlarmToRepository.kt`, `WelcomeScreen.kt`, `RegisterScreen.kt`, `LoginScreen.kt`, `MainActivity.kt`
+*   **การอัปเดต**:
+    *   **Database Migration V12:** เพิ่มคอลัมน์ `password` ลงในตาราง `user_log` พร้อมเขียนสคริปต์ Migration ทำการล็อกผู้ใช้ให้มีรหัสผ่าน (แถมทำ Backward Compatibility ให้ลูกค้ารุ่นแรกที่ไม่มีรหัสผ่าน ยังเล่นได้ปกติ)
+    *   **แยกหน้าจอ (Flow Separation):** ลบระบบ Auto-Login แบบทำส่งลวกๆ ทิ้งไป แล้วแยกเป็น 3 หน้าจอแบบสายยิมดุดัน (ดำ-แดงเลือดนก) ได้แก่ `WelcomeScreen` (หน้าต้อนรับ), `RegisterScreen` (หน้าสมัครใหม่), และ `LoginScreen`
+    *   **Security Validation:** ในหน้า `RegisterScreen` มีระบบตัวกรองบังคับให้ผู้ใช้กรอกรหัสผ่าน (Password & Confirm) 2 ช่องให้ตรงกัน หากไม่ตรงจะขึ้นข้อความเตอืน และใช้ปุ่มลูกเล่นซ่อนรหัสผ่านเป็นจุดไข่ปลา
+    *   **Persistent Session & Navigation:** ปรับแกนการนำทาง (Navigation Graph) ใหม่ เมื่อล็อกอินสำเร็จ ระบบจะฝังวิญญาณผู้ใช้ลง `SharedPreferences` ทำให้ปิดเปิดแอปใหม่ได้โดยไม่ต้องล็อกอินซ้ำ จนกว่าจะจงใจกดปุ่ม  `Log Out` ให้ดีดกลับมาที่หน้า `WelcomeScreen`
+    *   **Rock-Solid Unit Testing:** ได้ทำการเพิ่ม Test Cases จำนวน 5 เควสลงฝั่ง Repository เพื่อทดสอบการเช็ค Password ถูก/ผิด ให้มั่นใจ 100% ว่าการจัดเก็บข้อมูลลูกค้าปลอดภัยสุดๆ

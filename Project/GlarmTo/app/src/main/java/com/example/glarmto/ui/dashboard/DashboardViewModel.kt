@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -117,6 +118,63 @@ class DashboardViewModel(
         }
     }
 
+    fun shareToInstagramStory(username: String, level: Int, streak: Int) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val bitmap = android.graphics.Bitmap.createBitmap(1080, 1920, android.graphics.Bitmap.Config.ARGB_8888)
+                val canvas = android.graphics.Canvas(bitmap)
+                canvas.drawColor(android.graphics.Color.parseColor("#1A1A1A"))
+                
+                val paint = android.graphics.Paint().apply {
+                    color = android.graphics.Color.WHITE
+                    textSize = 120f
+                    textAlign = android.graphics.Paint.Align.CENTER
+                    isAntiAlias = true
+                    typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+                }
+                
+                canvas.drawText("GLARMTO \uD83D\uDCAA", 540f, 500f, paint)
+                
+                paint.textSize = 80f
+                paint.color = android.graphics.Color.parseColor("#E53935")
+                canvas.drawText("@$username", 540f, 800f, paint)
+                
+                paint.color = android.graphics.Color.LTGRAY
+                paint.textSize = 60f
+                canvas.drawText("LVL: $level", 540f, 1000f, paint)
+                canvas.drawText("Streak: $streak days\uD83D\uDD25", 540f, 1150f, paint)
+                
+                val imagesDir = java.io.File(application.cacheDir, "images")
+                imagesDir.mkdirs()
+                val imageFile = java.io.File(imagesDir, "glarmto_story.png")
+                val fos = java.io.FileOutputStream(imageFile)
+                bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, fos)
+                fos.close()
+                
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    application,
+                    "${application.packageName}.fileprovider",
+                    imageFile
+                )
+                
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "image/png"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                
+                withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    val chooser = Intent.createChooser(intent, "Share to Story")
+                    chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    application.startActivity(chooser)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     val weeklyVolume: StateFlow<List<Pair<String, Double>>> = repository.getUserFlow()
         .flatMapLatest { user ->
             val cal = Calendar.getInstance()
@@ -146,6 +204,95 @@ class DashboardViewModel(
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val heatmapData: StateFlow<List<Int>> = repository.getUserFlow()
+        .flatMapLatest { user ->
+            val cal = Calendar.getInstance()
+            val endMillis = repository.getDayRange(cal).second
+            cal.add(Calendar.DAY_OF_YEAR, -90)
+            val startMillis = repository.getDayRange(cal).first
+            
+            repository.getWorkoutsForRange(startMillis, endMillis).map { workouts ->
+                val dayFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val setsPerDay = mutableMapOf<String, Int>()
+                
+                for (i in 0..90) {
+                    val c = Calendar.getInstance()
+                    c.add(Calendar.DAY_OF_YEAR, -i)
+                    setsPerDay[dayFormat.format(c.time)] = 0
+                }
+                
+                workouts.forEach { w ->
+                    val dayStr = dayFormat.format(java.util.Date(w.dateInMillis))
+                    setsPerDay[dayStr] = (setsPerDay[dayStr] ?: 0) + 1
+                }
+                
+                setsPerDay.toList().reversed().map { it.second }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val radarChartData: StateFlow<Map<String, Float>> = repository.getUserFlow()
+        .flatMapLatest { user ->
+            val cal = Calendar.getInstance()
+            val endMillis = repository.getDayRange(cal).second
+            cal.add(Calendar.DAY_OF_YEAR, -30) // Last 30 days for Radar
+            val startMillis = repository.getDayRange(cal).first
+            
+            repository.getWorkoutsForRange(startMillis, endMillis).map { workouts ->
+                val counts = mutableMapOf(
+                    "Chest" to 0, "Back" to 0, "Legs" to 0, "Arms" to 0, "Shoulders" to 0
+                )
+                
+                workouts.forEach { w ->
+                    val name = w.exerciseName.lowercase()
+                    when {
+                        name.contains("bench") || name.contains("chest") || name.contains("push") || name.contains("pec") -> counts["Chest"] = counts["Chest"]!! + 1
+                        name.contains("pull") || name.contains("row") || name.contains("back") || name.contains("lat") -> counts["Back"] = counts["Back"]!! + 1
+                        name.contains("squat") || name.contains("leg") || name.contains("calf") || name.contains("press") -> counts["Legs"] = counts["Legs"]!! + 1
+                        name.contains("curl") || name.contains("tri") || name.contains("bi") || name.contains("arm") -> counts["Arms"] = counts["Arms"]!! + 1
+                        name.contains("shoulder") || name.contains("overhead") || name.contains("raise") || name.contains("delt") -> counts["Shoulders"] = counts["Shoulders"]!! + 1
+                        else -> {} // Uncat
+                    }
+                }
+                
+                val maxSets = counts.values.maxOrNull()?.toFloat()?.coerceAtLeast(1f) ?: 1f
+                counts.mapValues { it.value.toFloat() / maxSets } // Normalize 0f to 1f
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    val muscleRecoveryState: StateFlow<Map<String, Int>> = repository.getUserFlow()
+        .flatMapLatest { user ->
+            val cal = Calendar.getInstance()
+            val endMillis = repository.getDayRange(cal).second
+            cal.add(Calendar.HOUR_OF_DAY, -48) // Last 48 hours for Fatigue
+            val startMillis = cal.timeInMillis
+            
+            repository.getWorkoutsForRange(startMillis, endMillis).map { workouts ->
+                val counts = mutableMapOf(
+                    "Chest" to 0, "Back" to 0, "Legs" to 0, "Arms" to 0, "Shoulders" to 0
+                )
+                
+                workouts.forEach { w ->
+                    val name = w.exerciseName.lowercase()
+                    when {
+                        name.contains("bench") || name.contains("chest") || name.contains("push") || name.contains("pec") -> counts["Chest"] = counts["Chest"]!! + 1
+                        name.contains("pull") || name.contains("row") || name.contains("back") || name.contains("lat") -> counts["Back"] = counts["Back"]!! + 1
+                        name.contains("squat") || name.contains("leg") || name.contains("calf") || name.contains("press") -> counts["Legs"] = counts["Legs"]!! + 1
+                        name.contains("curl") || name.contains("tri") || name.contains("bi") || name.contains("arm") -> counts["Arms"] = counts["Arms"]!! + 1
+                        name.contains("shoulder") || name.contains("overhead") || name.contains("raise") || name.contains("delt") -> counts["Shoulders"] = counts["Shoulders"]!! + 1
+                        else -> {} 
+                    }
+                }
+                
+                // Recovery formula: 100% - (sets * 10). Coerce 0 to 100.
+                counts.mapValues { (100 - (it.value * 10)).coerceIn(0, 100) }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), mapOf(
+            "Chest" to 100, "Back" to 100, "Legs" to 100, "Arms" to 100, "Shoulders" to 100
+        ))
 }
 
 class DashboardViewModelFactory(

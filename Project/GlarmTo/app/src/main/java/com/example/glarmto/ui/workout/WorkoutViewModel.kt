@@ -43,6 +43,35 @@ class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() 
     private val _selectedDate = MutableStateFlow(CalendarDayUtils.localTodayStartMillis())
     val selectedDate: StateFlow<Long> = _selectedDate.asStateFlow()
 
+    private val _smartSuggestion = MutableStateFlow<String?>(null)
+    val smartSuggestion: StateFlow<String?> = _smartSuggestion.asStateFlow()
+
+    fun fetchSmartSuggestion(exerciseName: String) {
+        if (exerciseName.isBlank()) {
+            _smartSuggestion.value = null
+            return
+        }
+        viewModelScope.launch {
+            val lastWorkout = repository.getSmartSuggestion(exerciseName.trim())
+            if (lastWorkout == null) {
+                _smartSuggestion.value = null
+            } else {
+                val weight = lastWorkout.weight
+                val rpe = lastWorkout.rpe ?: 0
+                val reps = lastWorkout.reps
+                if (rpe in 1..7) {
+                    _smartSuggestion.value = "Suggestion: Try ${(weight + 2.5)}kg (Last time: ${weight}kg, RPE $rpe)"
+                } else if (rpe in 8..9) {
+                    _smartSuggestion.value = "Suggestion: Target ${weight}kg for ${reps + 1} reps (Last time: RPE $rpe)"
+                } else if (rpe == 10) {
+                    _smartSuggestion.value = "Suggestion: Stay at ${weight}kg or drop to ${(weight - 2.5).coerceAtLeast(0.0)}kg (Last time: RPE 10)"
+                } else {
+                    _smartSuggestion.value = "Suggestion: Last time you did ${weight}kg x $reps reps. Try to beat it!"
+                }
+            }
+        }
+    }
+
     @kotlinx.coroutines.ExperimentalCoroutinesApi
     val workouts: StateFlow<List<WorkoutEntity>> = combine(_selectedDate, _currentSessionId) { date, sessionId -> 
             Pair(date, sessionId) 
@@ -86,6 +115,53 @@ class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() 
     /** From "today" button or any local wall-clock instant. */
     fun setSelectedDateFromLocalInstant(wallMillis: Long) {
         _selectedDate.value = CalendarDayUtils.normalizeToLocalDayStart(wallMillis)
+    }
+
+    private val _restTimeSeconds = MutableStateFlow(0)
+    val restTimeSeconds: StateFlow<Int> = _restTimeSeconds.asStateFlow()
+
+    private val _isTimerRunning = MutableStateFlow(false)
+    val isTimerRunning: StateFlow<Boolean> = _isTimerRunning.asStateFlow()
+
+    private val _initialRestTime = MutableStateFlow(60)
+    val initialRestTime: StateFlow<Int> = _initialRestTime.asStateFlow()
+
+    private var restTimerJob: Job? = null
+
+    fun setRestTimer(seconds: Int) {
+        _restTimeSeconds.value = seconds
+        _initialRestTime.value = seconds
+    }
+
+    fun startRestTimer() {
+        if (_restTimeSeconds.value > 0) {
+            _isTimerRunning.value = true
+            restTimerJob?.cancel()
+            restTimerJob = viewModelScope.launch {
+                while (isActive && _isTimerRunning.value && _restTimeSeconds.value > 0) {
+                    delay(1000)
+                    _restTimeSeconds.value -= 1
+                    if (_restTimeSeconds.value <= 0) {
+                        _isTimerRunning.value = false
+                    }
+                }
+            }
+        }
+    }
+
+    fun stopRestTimer() {
+        _isTimerRunning.value = false
+        restTimerJob?.cancel()
+    }
+
+    fun addRestTime(seconds: Int) {
+        val next = _restTimeSeconds.value + seconds
+        if (next > 0) {
+            _restTimeSeconds.value = next
+        } else {
+            _restTimeSeconds.value = 0
+            stopRestTimer()
+        }
     }
 
     private fun startStopwatchTickerIfNeeded() {
