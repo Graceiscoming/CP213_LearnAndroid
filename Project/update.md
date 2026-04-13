@@ -384,3 +384,10 @@
     *   เพิ่มแท็บเมนูล่างอันใหม่ **Recovery** 
     *   สร้าง Fatigue Math Algorithm ที่แอบไปดึงข้อมูล Room Database 72 ชั่วโมงล่าสุดของตาราง `workout_log` มาคำนวณสะสมความล้า (Damage) และหักล้างกับค่าเวลาพักฟื้น (Time-Decay)
     *   โชว์ผลลัพธ์ผ่าน Custom Canvas Animation เป็นหลอดพลัง 0-100% จำแนกตามสัดส่วนกล้ามเนื้อ พร้อม AI Recommendation แนะนำว่าวันนี้ควรพักส่วนไหนและควรเล่นส่วนไหนที่ฟื้นตัวเต็มที่แล้ว
+
+### 10. AI Camera & ML Kit "Wow Factors" (ฟีเจอร์พรีเมียมที่ทำเองฟรี 100%) 📷🧠
+*   **ไฟล์ที่เกี่ยวข้อง**: `build.gradle.kts`, `AndroidManifest.xml`, `OpenFoodFactsApi.kt`, `NutritionOcrParser.kt`, `PoseAngleMath.kt`, `CameraScannerScreen.kt`, `AiPoseTrackerScreen.kt`, `WorkoutScreen.kt`, `NutritionScreen.kt`
+*   **การอัปเดต**:
+    *   **Smart Barcode Scanner:** ติดตั้ง `CameraX` คู่กับ `ML Kit Barcode Scanning` เมื่อแสกนบาร์โค้ดขนมปัง ระบบจะยิงหา `OpenFoodFacts API` และดึงข้อมูลแคลอรี่/โปรตีนมากรอกลง Database เราให้อัตโนมัติ!
+    *   **Nutrition Label OCR:** ถ้าไม่มีบาร์โค้ด ให้เล็งกล้องไปที่ตารางโภชนาการหลังซอง `ML Kit Text Recognition` จะกวาดสายตาอ่านหนังสือทั้งหมด แล้วใช้สมการ Regex ดึงตัวเลข "แคลอรี่" ออกมากรอกใส่หน้าจดบันทึกให้เองแบบไม่ต้องพิมพ์
+    *   **AI Form Pose Tracker (Squat Observer):** เปิดกล้องหน้าพร้อมเรียก `ML Kit Pose Detection` วาดเส้นก้างปลา (Skeleton Canvas) มาร์คจุดข้อต่อร่างกายแบบสดๆ เรียลไทม์! พร้อมคลาส `PoseAngleMath` ใช้คณิตศาสตร์เวกเตอร์จับมุมหัวเข่าและสะโพก เพื่อตะโกนบอกฟอร์มการจับ Squat เช่น "ย่อลงอีกนิด (Go Lower!)" หรือ "เยี่ยมมาก (Good Depth!)" เหมือนมี PT ส่วนตัวมานั่งมอง!

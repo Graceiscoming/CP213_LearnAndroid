@@ -26,6 +26,8 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import com.example.glarmto.ui.camera.CameraScannerScreen
+import com.example.glarmto.ui.camera.ScannerMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +64,21 @@ fun NutritionScreen() {
         val (start, end) = CalendarDayUtils.nutritionEditableLocalRange()
         val day = CalendarDayUtils.normalizeToLocalDayStart(selectedDate)
         day in start..end
+    }
+
+    var activeScannerMode by remember { mutableStateOf<ScannerMode?>(null) }
+    
+    if (activeScannerMode != null) {
+        CameraScannerScreen(
+            mode = activeScannerMode!!,
+            onResult = { macroData ->
+                foodName = macroData.productName
+                calories = macroData.calories.toString()
+                activeScannerMode = null
+            },
+            onCancel = { activeScannerMode = null }
+        )
+        return // Take over the entire screen while scanning
     }
 
     var showDatePicker by remember { mutableStateOf(false) }
@@ -264,6 +281,21 @@ fun NutritionScreen() {
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
                             Text("Add")
+                        }
+                    }
+                    
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(
+                            onClick = { activeScannerMode = ScannerMode.BARCODE },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Scan Barcode")
+                        }
+                        OutlinedButton(
+                            onClick = { activeScannerMode = ScannerMode.OCR },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Scan Label")
                         }
                     }
                 }

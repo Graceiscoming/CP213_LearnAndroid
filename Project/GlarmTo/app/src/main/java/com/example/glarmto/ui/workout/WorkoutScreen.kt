@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +33,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.glarmto.GlarmToApplication
 import com.example.glarmto.data.util.ExercisePresets
 import com.example.glarmto.ui.theme.GlarmToTheme
+import com.example.glarmto.ui.workout.AiPoseTrackerScreen
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import nl.dionsegijn.konfetti.compose.KonfettiView
@@ -76,6 +78,12 @@ fun WorkoutScreen() {
     var routineQueue by remember { mutableStateOf(listOf<String>()) }
     var showRoutineDialog by remember { mutableStateOf(false) }
     var showAiGeneratorSheet by remember { mutableStateOf(false) }
+    var showAiPoseTracker by remember { mutableStateOf(false) }
+
+    if (showAiPoseTracker) {
+        AiPoseTrackerScreen(onClose = { showAiPoseTracker = false })
+        return // Take over the entire screen while tracking
+    }
 
     // Rest Timer State
     var restTimeSeconds by remember { mutableStateOf(0) }
@@ -267,6 +275,15 @@ fun WorkoutScreen() {
                                 Spacer(Modifier.width(8.dp))
                                 Text("AI WORKOUT", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                             }
+                        }
+                        
+                        OutlinedButton(
+                            onClick = { showAiPoseTracker = true },
+                            modifier = Modifier.fillMaxWidth().height(64.dp)
+                        ) {
+                            Icon(Icons.Filled.Videocam, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                            Spacer(Modifier.width(8.dp))
+                            Text("AI FORM TRACKER (CAMERA)", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
                         }
                     } else {
                         Card(
