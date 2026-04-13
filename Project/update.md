@@ -391,3 +391,12 @@
     *   **Smart Barcode Scanner:** ติดตั้ง `CameraX` คู่กับ `ML Kit Barcode Scanning` เมื่อแสกนบาร์โค้ดขนมปัง ระบบจะยิงหา `OpenFoodFacts API` และดึงข้อมูลแคลอรี่/โปรตีนมากรอกลง Database เราให้อัตโนมัติ!
     *   **Nutrition Label OCR:** ถ้าไม่มีบาร์โค้ด ให้เล็งกล้องไปที่ตารางโภชนาการหลังซอง `ML Kit Text Recognition` จะกวาดสายตาอ่านหนังสือทั้งหมด แล้วใช้สมการ Regex ดึงตัวเลข "แคลอรี่" ออกมากรอกใส่หน้าจดบันทึกให้เองแบบไม่ต้องพิมพ์
     *   **AI Form Pose Tracker (Squat Observer):** เปิดกล้องหน้าพร้อมเรียก `ML Kit Pose Detection` วาดเส้นก้างปลา (Skeleton Canvas) มาร์คจุดข้อต่อร่างกายแบบสดๆ เรียลไทม์! พร้อมคลาส `PoseAngleMath` ใช้คณิตศาสตร์เวกเตอร์จับมุมหัวเข่าและสะโพก เพื่อตะโกนบอกฟอร์มการจับ Squat เช่น "ย่อลงอีกนิด (Go Lower!)" หรือ "เยี่ยมมาก (Good Depth!)" เหมือนมี PT ส่วนตัวมานั่งมอง!
+
+### 11. Full Authentication System Overhaul (ยกระดับระบบยืนยันตัวตนแบบเต็มรูปแบบ) 🔐
+*   **ไฟล์ที่เกี่ยวข้อง**: `AppDatabase.kt`, `UserEntity.kt`, `GlarmToRepository.kt`, `WelcomeScreen.kt`, `RegisterScreen.kt`, `LoginScreen.kt`, `MainActivity.kt`
+*   **การอัปเดต**:
+    *   **Database Migration V12:** เพิ่มคอลัมน์ `password` ลงในตาราง `user_log` พร้อมเขียนสคริปต์ Migration ทำการล็อกผู้ใช้ให้มีรหัสผ่าน (แถมทำ Backward Compatibility ให้ลูกค้ารุ่นแรกที่ไม่มีรหัสผ่าน ยังเล่นได้ปกติ)
+    *   **แยกหน้าจอ (Flow Separation):** ลบระบบ Auto-Login แบบทำส่งลวกๆ ทิ้งไป แล้วแยกเป็น 3 หน้าจอแบบสายยิมดุดัน (ดำ-แดงเลือดนก) ได้แก่ `WelcomeScreen` (หน้าต้อนรับ), `RegisterScreen` (หน้าสมัครใหม่), และ `LoginScreen`
+    *   **Security Validation:** ในหน้า `RegisterScreen` มีระบบตัวกรองบังคับให้ผู้ใช้กรอกรหัสผ่าน (Password & Confirm) 2 ช่องให้ตรงกัน หากไม่ตรงจะขึ้นข้อความเตอืน และใช้ปุ่มลูกเล่นซ่อนรหัสผ่านเป็นจุดไข่ปลา
+    *   **Persistent Session & Navigation:** ปรับแกนการนำทาง (Navigation Graph) ใหม่ เมื่อล็อกอินสำเร็จ ระบบจะฝังวิญญาณผู้ใช้ลง `SharedPreferences` ทำให้ปิดเปิดแอปใหม่ได้โดยไม่ต้องล็อกอินซ้ำ จนกว่าจะจงใจกดปุ่ม  `Log Out` ให้ดีดกลับมาที่หน้า `WelcomeScreen`
+    *   **Rock-Solid Unit Testing:** ได้ทำการเพิ่ม Test Cases จำนวน 5 เควสลงฝั่ง Repository เพื่อทดสอบการเช็ค Password ถูก/ผิด ให้มั่นใจ 100% ว่าการจัดเก็บข้อมูลลูกค้าปลอดภัยสุดๆ
