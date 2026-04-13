@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -73,12 +74,20 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    var onUserLeaveHintCallback: (() -> Unit)? = null
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        onUserLeaveHintCallback?.invoke()
+    }
 }
 
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     object Dashboard : Screen("dashboard", "Dashboard", Icons.Filled.Home)
     object Routines : Screen("routines", "Routines", Icons.Filled.ListAlt)
     object Workout : Screen("workout", "Workout", Icons.Filled.FitnessCenter)
+    object Recovery : Screen("recovery", "Recovery", Icons.Filled.BatteryChargingFull)
     object Nutrition : Screen("nutrition", "Nutrition", Icons.Filled.Fastfood)
     object Calculator : Screen("calculator", "Profile", Icons.Filled.Person)
 }
@@ -93,6 +102,7 @@ fun MainScreen(startDestination: String) {
         Screen.Dashboard,
         Screen.Routines,
         Screen.Workout,
+        Screen.Recovery,
         Screen.Nutrition,
         Screen.Calculator
     )
@@ -173,6 +183,7 @@ fun MainScreen(startDestination: String) {
             }
             composable(Screen.Routines.route) { com.example.glarmto.ui.routines.RoutinesScreen() }
             composable(Screen.Workout.route) { WorkoutScreen() }
+            composable(Screen.Recovery.route) { com.example.glarmto.ui.workout.RecoveryScreen() }
             composable(Screen.Nutrition.route) { NutritionScreen() }
             composable(Screen.Calculator.route) { CalculatorScreen() }
         }

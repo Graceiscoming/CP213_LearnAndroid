@@ -355,3 +355,32 @@
     *   เขียนฟังก์ชัน `shareToInstagramStory` จัดเตรียมพื้นที่ Canvas และลงพู่กันวาดรูปภาพ Bitmap ขนาดแนวตั้ง (Story Size 1080x1920) แบบ On-The-Fly (วาดตอนกดปุ่ม)
     *   แนบข้อมูล `Level` และ `Streak (วัน)` เข้าไปในรูปภาพ แล้วเซฟใส่ Cache Folder อย่างรวดเร็ว
     *   กำหนด `FileProvider` เพื่อยิง Intent รูปนั้นออกนอกกรอบของแอป กระโดดสู่หน้า Share ข้ามไปยัง Story ใน IG หรือแอปโซเชียลอื่นๆ ได้ทันที
+
+
+### 6. Picture-in-Picture (PiP) Rest Timer (สลับแอปก็ยังมีนาฬิกาลอยได้)
+*   **ไฟล์ที่เกี่ยวข้อง**: `AndroidManifest.xml`, `MainActivity.kt`, `WorkoutScreen.kt`
+*   **การอัปเดต**:
+    *   ตั้งค่า `android:supportsPictureInPicture="true"` ในล่วงหน้า
+    *   ดักจับอีเวนท์ระดับระบบ (OS) `onUserLeaveHint` (เมื่อผู้ใช้ย่อแอปหรือสลับไปแอปอื่น)
+    *   เมื่ออยู่ในระหว่างนับเวลาพัก หน้าต่างแอปจะยุบลงมาเหลือแค่ตัวเลขจับเวลาพัก (สีดำล้วน + นาฬิกา) ซ้อนทับบนแอปอื่น เช่น IG หรือ YouTube เพื่อให้เห็นเวลาพักตลอดเวลา
+
+###  7. 3D Radar Chart Analysis (กราฟประเมินกล้ามเนื้อ 5 แฉก)
+*   **ไฟล์ที่เกี่ยวข้อง**: `DashboardViewModel.kt`, `DashboardScreen.kt`
+*   **การอัปเดต**:
+    *   นำประวัติการออกกำลังกาย 30 วันหลังสุด มาทำ **Regex / String Match** แยกคำศัพท์ชื่อท่า เพื่อลงตะกร้า 5 หมวด: Chest, Back, Legs, Arms, Shoulders อย่างอัตโนมัติ
+    *   ใช้ `Android Compose Canvas` ร่างกราฟใยแมงมุม 5 แกน (Spider Web / Radar Chart) แบบ Custom Drawing เต็มระบบ พร้อมใส่เงาและความโปร่งแสงสุดเฉียบ
+    *   ทำให้ผู้ใช้ประเมินสัดส่วนร่างตัวเองได้แบบ Real-time (ถ้าช่วงนี้เล่นแต่อก กราฟขากับหลังก็จะหดลงไป)
+
+### 8. On-Device "Expert" Workout Generator (AI สร้างตารางฝึกออฟไลน์) 🎲🏋️
+*   **ไฟล์ที่เกี่ยวข้อง**: `ExerciseLibrary.kt`, `WorkoutGenerator.kt`, `WorkoutScreen.kt`, `AiWorkoutGeneratorSheet.kt`
+*   **การอัปเดต**:
+    *   สร้างระบบ Rule-based AI Engine ภายในตัวเครื่อง (ไม่ต้องรอโหลดเน็ต) โดยการจับคู่ท่าทาง (Exercise Presets) นำมาผูกกับ Tag อุปกรณ์ และชิ้นส่วนกล้ามเนื้อ
+    *   ปรับหน้าต่างเข้าสู่หน้าจอ Modal Bottom Sheet ให้ผู้ใช้เลื่อนกำหนดเวลาที่มี อุปกรณ์ที่มี และกล้ามเนื้อที่อยากโฟกัส
+    *   Algorithm จะคำนวณหั่นเวลา แบ่งสัดส่วนพัก/ยก และสุ่มจัดท่าพร้อมจำนวนเซต/เรปให้โดยอัตโนมัติ 4-5 ท่า พร้อมเริ่มลุยได้ทันที!
+
+### 9. Muscle Recovery & Fatigue Tracker (ระบบวิเคราะห์ความล้ากล้ามเนื้อ) 🩸🔋
+*   **ไฟล์ที่เกี่ยวข้อง**: `RecoveryViewModel.kt`, `RecoveryScreen.kt`, `MainActivity.kt`
+*   **การอัปเดต**:
+    *   เพิ่มแท็บเมนูล่างอันใหม่ **Recovery** 
+    *   สร้าง Fatigue Math Algorithm ที่แอบไปดึงข้อมูล Room Database 72 ชั่วโมงล่าสุดของตาราง `workout_log` มาคำนวณสะสมความล้า (Damage) และหักล้างกับค่าเวลาพักฟื้น (Time-Decay)
+    *   โชว์ผลลัพธ์ผ่าน Custom Canvas Animation เป็นหลอดพลัง 0-100% จำแนกตามสัดส่วนกล้ามเนื้อ พร้อม AI Recommendation แนะนำว่าวันนี้ควรพักส่วนไหนและควรเล่นส่วนไหนที่ฟื้นตัวเต็มที่แล้ว

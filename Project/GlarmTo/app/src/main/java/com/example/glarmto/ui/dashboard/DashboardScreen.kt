@@ -41,6 +41,7 @@ fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: () -> Unit =
     val todayWater by viewModel.todayWaterMl.collectAsState()
     val waterGoal by viewModel.waterGoalMl.collectAsState()
     val heatmapData by viewModel.heatmapData.collectAsState()
+    val radarData by viewModel.radarChartData.collectAsState()
 
     val level = user?.level ?: 1
     val xp = user?.xp ?: 0

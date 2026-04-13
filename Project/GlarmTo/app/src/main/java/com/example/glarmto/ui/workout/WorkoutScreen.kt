@@ -75,6 +75,7 @@ fun WorkoutScreen() {
 
     var routineQueue by remember { mutableStateOf(listOf<String>()) }
     var showRoutineDialog by remember { mutableStateOf(false) }
+    var showAiGeneratorSheet by remember { mutableStateOf(false) }
 
     // Rest Timer State
     var restTimeSeconds by remember { mutableStateOf(0) }
@@ -98,6 +99,55 @@ fun WorkoutScreen() {
         }
     }
 
+    var isPipMode by remember { mutableStateOf(false) }
+    
+    DisposableEffect(context, isTimerRunning) {
+        val activity = context as? com.example.glarmto.MainActivity
+        
+        val pipListener = androidx.core.util.Consumer<androidx.core.app.PictureInPictureModeChangedInfo> { info ->
+            isPipMode = info.isInPictureInPictureMode
+        }
+        
+        val leaveHintCallback = {
+            if (isTimerRunning && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                val params = android.app.PictureInPictureParams.Builder()
+                    .setAspectRatio(android.util.Rational(3, 2))
+                    .build()
+                activity?.enterPictureInPictureMode(params)
+            }
+        }
+        
+        activity?.addOnPictureInPictureModeChangedListener(pipListener)
+        activity?.onUserLeaveHintCallback = leaveHintCallback
+        
+        onDispose {
+            activity?.removeOnPictureInPictureModeChangedListener(pipListener)
+            if (activity?.onUserLeaveHintCallback == leaveHintCallback) {
+                activity.onUserLeaveHintCallback = null
+            }
+        }
+    }
+
+    if (isPipMode) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(androidx.compose.ui.graphics.Color(0xFF1E1E1E)),
+            contentAlignment = androidx.compose.ui.Alignment.Center
+        ) {
+            Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                Icon(Icons.Filled.Timer, contentDescription = null, tint = androidx.compose.ui.graphics.Color.LightGray)
+                Text(
+                    text = String.format("%d:%02d", restTimeSeconds / 60, restTimeSeconds % 60),
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = androidx.compose.ui.graphics.Color.White
+                )
+            }
+        }
+        return
+    }
+
     val isWorkoutDateValid = remember(selectedDate) {
         val cal = Calendar.getInstance()
         val todayStart = cal.apply {
@@ -119,6 +169,27 @@ fun WorkoutScreen() {
     val focusManager = LocalFocusManager.current
     val haptic = LocalHapticFeedback.current
     var isShowingConfetti by remember { mutableStateOf(false) }
+
+    if (showAiGeneratorSheet) {
+        AiWorkoutGeneratorSheet(
+            onDismissRequest = { showAiGeneratorSheet = false },
+            onWorkoutGenerated = { generatedWorkout ->
+                showAiGeneratorSheet = false
+                val newQueue = mutableListOf<String>()
+                generatedWorkout.exercises.forEach { ex ->
+                    for (i in 0 until ex.targetSets) {
+                        newQueue.add(ex.name)
+                    }
+                }
+                routineQueue = newQueue
+                viewModel.startWorkout()
+                if (newQueue.isNotEmpty()) {
+                    exerciseName = newQueue.first()
+                    routineQueue = routineQueue.drop(1)
+                }
+            }
+        )
+    }
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -180,12 +251,22 @@ fun WorkoutScreen() {
                             }
                         }
 
-                        Button(
-                            onClick = { viewModel.startWorkout() },
-                            modifier = Modifier.fillMaxWidth().height(64.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                        ) {
-                            Text("START WORKOUT", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { viewModel.startWorkout() },
+                                modifier = Modifier.weight(1f).height(64.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            ) {
+                                Text("START", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            }
+                            OutlinedButton(
+                                onClick = { showAiGeneratorSheet = true },
+                                modifier = Modifier.weight(1f).height(64.dp)
+                            ) {
+                                Icon(Icons.Filled.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Spacer(Modifier.width(8.dp))
+                                Text("AI WORKOUT", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     } else {
                         Card(

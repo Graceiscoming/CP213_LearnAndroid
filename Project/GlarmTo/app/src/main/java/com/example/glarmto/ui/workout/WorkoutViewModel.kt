@@ -117,6 +117,53 @@ class WorkoutViewModel(private val repository: GlarmToRepository) : ViewModel() 
         _selectedDate.value = CalendarDayUtils.normalizeToLocalDayStart(wallMillis)
     }
 
+    private val _restTimeSeconds = MutableStateFlow(0)
+    val restTimeSeconds: StateFlow<Int> = _restTimeSeconds.asStateFlow()
+
+    private val _isTimerRunning = MutableStateFlow(false)
+    val isTimerRunning: StateFlow<Boolean> = _isTimerRunning.asStateFlow()
+
+    private val _initialRestTime = MutableStateFlow(60)
+    val initialRestTime: StateFlow<Int> = _initialRestTime.asStateFlow()
+
+    private var restTimerJob: Job? = null
+
+    fun setRestTimer(seconds: Int) {
+        _restTimeSeconds.value = seconds
+        _initialRestTime.value = seconds
+    }
+
+    fun startRestTimer() {
+        if (_restTimeSeconds.value > 0) {
+            _isTimerRunning.value = true
+            restTimerJob?.cancel()
+            restTimerJob = viewModelScope.launch {
+                while (isActive && _isTimerRunning.value && _restTimeSeconds.value > 0) {
+                    delay(1000)
+                    _restTimeSeconds.value -= 1
+                    if (_restTimeSeconds.value <= 0) {
+                        _isTimerRunning.value = false
+                    }
+                }
+            }
+        }
+    }
+
+    fun stopRestTimer() {
+        _isTimerRunning.value = false
+        restTimerJob?.cancel()
+    }
+
+    fun addRestTime(seconds: Int) {
+        val next = _restTimeSeconds.value + seconds
+        if (next > 0) {
+            _restTimeSeconds.value = next
+        } else {
+            _restTimeSeconds.value = 0
+            stopRestTimer()
+        }
+    }
+
     private fun startStopwatchTickerIfNeeded() {
         stopwatchJob?.cancel()
         stopwatchJob = viewModelScope.launch {

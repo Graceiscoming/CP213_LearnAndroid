@@ -62,6 +62,11 @@ class GlarmToRepository(private val dao: GlarmToDao, private val sessionManager:
         dao.getLatestWorkoutByName(username, exerciseName)
     }
 
+    suspend fun getWorkoutsBetweenRange(start: Long, end: Long): List<WorkoutEntity> = withContext(Dispatchers.IO) {
+        val username = sessionManager.getCurrentUser() ?: return@withContext emptyList()
+        dao.getWorkoutsBetween(username, start, end)
+    }
+
     suspend fun insertWorkout(workout: WorkoutEntity, awardXp: Boolean = true) {
         val username = sessionManager.getCurrentUser() ?: return
         withContext(Dispatchers.IO) {
