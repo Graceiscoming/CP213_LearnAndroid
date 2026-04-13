@@ -1,7 +1,5 @@
 package com.example.glarmto.ui.login
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,8 +18,12 @@ import androidx.compose.ui.unit.sp
 import com.example.glarmto.GlarmToApplication
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(onBack: () -> Unit, onLoginSuccess: () -> Unit) {
+fun RegisterScreen(
+    onBack: () -> Unit,
+    onRegisterSuccess: () -> Unit
+) {
     val context = LocalContext.current
     val application = context.applicationContext as GlarmToApplication
     val repository = application.repository
@@ -29,17 +31,18 @@ fun LoginScreen(onBack: () -> Unit, onLoginSuccess: () -> Unit) {
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var isChecking by remember { mutableStateOf(false) }
+    var isRegistering by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            @OptIn(ExperimentalMaterial3Api::class)
             TopAppBar(
                 title = { Text("") },
                 navigationIcon = {
-                    // It expects an onBack to route back to WelcomeScreen, but it wasn't passed in params. Let's add it temporarily if needed or just use default local back dispatcher.
-                    // To keep it simple without breaking signature too much, normally we might pass (onBack: () -> Unit). Since we can't easily change the signature without modifying MainActivity right now, I'll update signature below.
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
@@ -56,7 +59,7 @@ fun LoginScreen(onBack: () -> Unit, onLoginSuccess: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = "WELCOME\nBACK",
+                text = "JOIN THE\nBROTHERHOOD",
                 fontSize = 36.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.primary,
@@ -65,7 +68,7 @@ fun LoginScreen(onBack: () -> Unit, onLoginSuccess: () -> Unit) {
             )
             
             Text(
-                text = "Log in to continue tracking.",
+                text = "Create an account to start tracking your gains.",
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                 modifier = Modifier.padding(bottom = 32.dp)
@@ -75,26 +78,41 @@ fun LoginScreen(onBack: () -> Unit, onLoginSuccess: () -> Unit) {
                 value = username,
                 onValueChange = { 
                     username = it
-                    errorMessage = null
+                    errorMessage = null 
                 },
                 label = { Text("Username") },
-                modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp)
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = password,
                 onValueChange = { 
                     password = it
-                    errorMessage = null
+                    errorMessage = null 
                 },
                 label = { Text("Password") },
-                modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { 
+                    confirmPassword = it
+                    errorMessage = null 
+                },
+                label = { Text("Confirm Password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp)
             )
 
@@ -111,33 +129,38 @@ fun LoginScreen(onBack: () -> Unit, onLoginSuccess: () -> Unit) {
 
             Button(
                 onClick = {
-                    val user = username.trim()
-                    if (user.isNotEmpty() && password.isNotEmpty()) {
-                        isChecking = true
-                        scope.launch {
-                            val success = repository.login(user, password)
-                            isChecking = false
-                            if (success) {
-                                onLoginSuccess()
-                            } else {
-                                errorMessage = "Invalid username or password."
-                            }
+                    val formattedUser = username.trim()
+                    if (formattedUser.isEmpty() || password.isEmpty()) {
+                        errorMessage = "All fields are required."
+                        return@Button
+                    }
+                    if (password != confirmPassword) {
+                        errorMessage = "Passwords do not match."
+                        return@Button
+                    }
+                    
+                    isRegistering = true
+                    scope.launch {
+                        val success = repository.register(formattedUser, password)
+                        isRegistering = false
+                        if (success) {
+                            onRegisterSuccess()
+                        } else {
+                            errorMessage = "Username already exists."
                         }
-                    } else {
-                        errorMessage = "Please enter username and password."
                     }
                 },
-                enabled = !isChecking,
+                enabled = !isRegistering,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                if (isChecking) {
+                if (isRegistering) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                 } else {
-                    Text("LOG IN", fontSize = 16.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text("REGISTER", fontSize = 16.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 }
             }
         }

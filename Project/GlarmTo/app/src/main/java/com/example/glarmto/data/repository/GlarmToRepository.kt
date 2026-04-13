@@ -280,15 +280,31 @@ class GlarmToRepository(private val dao: GlarmToDao, private val sessionManager:
     }
     
     // User functions
-    suspend fun login(username: String) {
-        sessionManager.loginUser(username)
-        withContext(Dispatchers.IO) {
+    suspend fun register(username: String, password: String): Boolean {
+        return withContext(Dispatchers.IO) {
             val user = dao.getUser(username).firstOrNull()
-            if (user == null) {
-                dao.insertUser(UserEntity(username = username))
-                sessionManager.setProfileSetup(false)
+            if (user != null) {
+                false // User already exists
             } else {
+                val newUser = UserEntity(username = username, password = password)
+                dao.insertUser(newUser)
+                sessionManager.loginUser(username)
+                sessionManager.setProfileSetup(false)
+                true
+            }
+        }
+    }
+
+    suspend fun login(username: String, password: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            val user = dao.getUser(username).firstOrNull()
+            // Check backward compatibility too: if DB migrated from older versions, password string is empty
+            if (user != null && (user.password == password || user.password.isEmpty())) {
+                sessionManager.loginUser(username)
                 sessionManager.setProfileSetup(user.profileSetup)
+                true
+            } else {
+                false // User not found or incorrect password
             }
         }
     }
