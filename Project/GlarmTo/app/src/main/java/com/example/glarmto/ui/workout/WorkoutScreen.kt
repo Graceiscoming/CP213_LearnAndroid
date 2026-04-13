@@ -19,7 +19,13 @@ import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.*
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +51,131 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
+
+fun parseVoiceCommand(command: String): Triple<String, String, String>? {
+    val lowerCommand = command.lowercase(Locale.getDefault()).trim()
+
+    // 1. Extract all numbers and context
+    val numberRegex = Regex("""(\d+(?:\.\d+)?)""")
+    val matches = numberRegex.findAll(lowerCommand).toList()
+    
+    if (matches.isEmpty()) return null
+
+    var weight = ""
+    var reps = ""
+
+    // Dictionary of units
+    val weightWords = listOf("kg", "kilo", "kilos", "กิโล", "โล", "ปอนด์", "lbs", "kg.")
+    val repWords = listOf("reps", "rep", "ครั้ง", "ที", "sets", "เซต")
+
+    // Find explicit matches first
+    val explicitWeights = mutableListOf<String>()
+    val explicitReps = mutableListOf<String>()
+    val unassignedNumbers = mutableListOf<String>()
+
+    for (match in matches) {
+        val numStr = match.value
+        val numIndex = match.range.last
+        // Extract substring after the number to check for unit (up to 15 chars)
+        val textAfter = lowerCommand.substring(numIndex + 1).take(15).trim()
+        val textBeforeStr = lowerCommand.substring(0, match.range.first).takeLast(15).trim()
+        
+        // Split to get the immediate next word
+        val nextWord = textAfter.split(Regex("""\s+""")).firstOrNull()?.replace(Regex("[^a-zก-๙]"), "") ?: ""
+        val prevWord = textBeforeStr.split(Regex("""\s+""")).lastOrNull()?.replace(Regex("[^a-zก-๙]"), "") ?: ""
+
+        val isWeightUnit = weightWords.any { nextWord.startsWith(it) }
+        val isRepUnit = repWords.any { nextWord.startsWith(it) }
+
+        // Also check if they said something like "100kg" without space
+        val attachedWeight = weightWords.any { textAfter.startsWith(it) }
+        val attachedRep = repWords.any { textAfter.startsWith(it) }
+
+        if (isWeightUnit || attachedWeight) {
+            explicitWeights.add(numStr)
+        } else if (isRepUnit || attachedRep) {
+            explicitReps.add(numStr)
+        } else {
+            unassignedNumbers.add(numStr)
+        }
+    }
+
+    // Assigning Numbers Rule
+    if (matches.size == 1) {
+        // Bodyweight fallback (only 1 number -> reps)
+        weight = explicitWeights.firstOrNull() ?: "0"
+        reps = explicitReps.firstOrNull() ?: unassignedNumbers.firstOrNull() ?: matches.first().value
+        if (explicitWeights.isNotEmpty() && explicitReps.isEmpty()) reps = "1" // e.g., "100kg hold"
+    } else {
+        weight = explicitWeights.firstOrNull() ?: ""
+        reps = explicitReps.firstOrNull() ?: ""
+
+        // If something is unassigned, use fallback max logic
+        if (weight.isEmpty() && unassignedNumbers.isNotEmpty()) {
+            val candidate = unassignedNumbers.removeAt(0)
+            if (reps.isEmpty() && unassignedNumbers.isNotEmpty()) {
+                // We have 2 unassigned. Use bigger = weight
+                val cand2 = unassignedNumbers.removeAt(0)
+                val f1 = candidate.toFloatOrNull() ?: 0f
+                val f2 = cand2.toFloatOrNull() ?: 0f
+                if (f1 > f2) {
+                    weight = candidate; reps = cand2
+                } else {
+                    weight = cand2; reps = candidate
+                }
+            } else {
+                weight = candidate 
+            }
+        }
+        if (reps.isEmpty() && unassignedNumbers.isNotEmpty()) {
+            reps = unassignedNumbers.removeAt(0)
+        }
+    }
+    
+    // Fallbacks just in case
+    if (weight.isEmpty()) weight = "0"
+    if (reps.isEmpty()) reps = "1"
+    
+    // Convert reps to whole number
+    reps = reps.substringBefore(".")
+
+    // 2. Extract words for Exercise (Remove all numbers and units)
+    var textOnly = lowerCommand.replace(numberRegex, " ")
+    val allUnits = weightWords + repWords + listOf("for", "with", "ทำ", "เล่น", "น้ำหนัก")
+    textOnly = textOnly.split(Regex("\\s+"))
+        .filter { word -> word.isNotBlank() && !allUnits.any { it.equals(word, ignoreCase = true) } }
+        .joinToString(" ")
+
+    // 3. Fuzzy match against ExercisePresets
+    var finalExercise = textOnly
+    val extractedWords = textOnly.split(" ").filter { it.length > 2 }
+    
+    if (textOnly.isNotBlank()) {
+        val bestMatch = com.example.glarmto.data.util.ExercisePresets.allExercises.maxByOrNull { preset ->
+            val pLower = preset.lowercase(Locale.getDefault())
+            if (pLower == textOnly) 1000
+            else if (pLower.contains(textOnly) || textOnly.contains(pLower)) 500
+            else {
+                val presetWords = pLower.split(" ")
+                extractedWords.count { presetWords.contains(it) } * 10
+            }
+        }
+        
+        val pLower = bestMatch?.lowercase(Locale.getDefault()) ?: ""
+        if (bestMatch != null && (pLower.contains(textOnly) || textOnly.contains(pLower))) {
+            finalExercise = bestMatch
+        } else {
+            // Capitalize first letters neatly
+            finalExercise = textOnly.split(" ").joinToString(" ") { 
+                if (it.isNotEmpty()) it.replaceFirstChar { char -> char.uppercase() } else ""
+            }
+        }
+    } else {
+        return null
+    }
+
+    return Triple(finalExercise, weight, reps)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -177,6 +308,34 @@ fun WorkoutScreen() {
     val focusManager = LocalFocusManager.current
     val haptic = LocalHapticFeedback.current
     var isShowingConfetti by remember { mutableStateOf(false) }
+
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull() ?: ""
+            val parsed = parseVoiceCommand(spokenText)
+            if (parsed != null) {
+                exerciseName = parsed.first
+                weight = parsed.second
+                reps = parsed.third
+                rpe = ""
+                // Auto add set!
+                viewModel.addWorkout(
+                    exerciseName = exerciseName,
+                    weight = weight.toDoubleOrNull() ?: 0.0,
+                    reps = reps.toIntOrNull() ?: 0,
+                    rpe = null
+                )
+                initialRestTime = defaultRestTime
+                restTimeSeconds = defaultRestTime
+                isTimerRunning = true
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            } else {
+                exerciseName = spokenText // Fallback
+            }
+        }
+    }
 
     if (showAiGeneratorSheet) {
         AiWorkoutGeneratorSheet(
@@ -516,7 +675,25 @@ fun WorkoutScreen() {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Log Exercise", fontWeight = FontWeight.SemiBold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Log Exercise", fontWeight = FontWeight.SemiBold)
+                                IconButton(
+                                    onClick = {
+                                        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                            putExtra(RecognizerIntent.EXTRA_PROMPT, "Say e.g.: Squat 100 kg 8 reps")
+                                        }
+                                        try {
+                                            speechLauncher.launch(intent)
+                                        } catch (e: Exception) {
+                                            // Ignore if no speech recognition support
+                                        }
+                                    },
+                                    modifier = Modifier.padding(start = 4.dp).size(32.dp)
+                                ) {
+                                    Icon(Icons.Filled.Mic, contentDescription = "Voice Log", tint = MaterialTheme.colorScheme.primary)
+                                }
+                            }
                             if (customRoutines.isNotEmpty()) {
                                 TextButton(onClick = {
                                     if (routineQueue.isNotEmpty()) {
