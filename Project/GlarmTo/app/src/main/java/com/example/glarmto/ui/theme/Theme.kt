@@ -16,54 +16,98 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkRedColorScheme = darkColorScheme(
+private val ClassicColorScheme = darkColorScheme(
     primary = BloodRed,
     secondary = DarkRed,
     tertiary = LightRed,
     background = DarkBackground,
     surface = DarkSurface,
+    surfaceVariant = Color(0xFF2C2C2C),
     onPrimary = LightText,
     onSecondary = LightText,
     onTertiary = DarkBackground,
     onBackground = LightText,
-    onSurface = LightText
+    onSurface = LightText,
+    onSurfaceVariant = SecondaryText
 )
 
-// We force the app to always use the dark red/black theme for "GlarmTo"
-private val LightRedColorScheme = darkColorScheme(
-    primary = BloodRed,
-    secondary = DarkRed,
-    tertiary = LightRed,
-    background = DarkBackground,
-    surface = DarkSurface,
+private val OceanColorScheme = darkColorScheme(
+    primary = OceanPrimary,
+    secondary = OceanSecondary,
+    tertiary = OceanPrimary,
+    background = OceanBackground,
+    surface = OceanSurface,
+    surfaceVariant = Color(0xFF033A56),
     onPrimary = LightText,
-    onSecondary = LightText,
-    onTertiary = DarkBackground,
+    onSecondary = DarkBackground,
     onBackground = LightText,
-    onSurface = LightText
+    onSurface = LightText,
+    onSurfaceVariant = Color(0xFFB0D0E6)
+)
+
+private val NeonColorScheme = darkColorScheme(
+    primary = NeonPrimary,
+    secondary = NeonSecondary,
+    tertiary = NeonPrimary,
+    background = NeonBackground,
+    surface = NeonSurface,
+    surfaceVariant = Color(0xFF242436),
+    onPrimary = DarkBackground,
+    onSecondary = LightText,
+    onBackground = LightText,
+    onSurface = LightText,
+    onSurfaceVariant = Color(0xFFC0C0D4)
+)
+
+private val ForestColorScheme = darkColorScheme(
+    primary = ForestPrimary,
+    secondary = ForestSecondary,
+    tertiary = ForestPrimary,
+    background = ForestBackground,
+    surface = ForestSurface,
+    surfaceVariant = Color(0xFF384A41),
+    onPrimary = LightText,
+    onSecondary = DarkBackground,
+    onBackground = LightText,
+    onSurface = LightText,
+    onSurfaceVariant = Color(0xFFB0C4BC)
+)
+
+private val AuraColorScheme = darkColorScheme(
+    primary = AuraPrimary,
+    secondary = AuraSecondary,
+    tertiary = AuraPrimary,
+    background = AuraBackground,
+    surface = AuraSurface,
+    surfaceVariant = Color(0x331E152A),
+    onPrimary = LightText,
+    onSecondary = DarkBackground,
+    onBackground = LightText,
+    onSurface = LightText,
+    onSurfaceVariant = Color(0xFFD8C4FF)
 )
 
 @Composable
 fun GlarmToTheme(
-    darkTheme: Boolean = true, // Defaulting to dark for Black & Red theme
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false, // Disable dynamic colors so it stays Red & Black
+    themeName: String = com.example.glarmto.data.preferences.ThemeManager.THEME_CLASSIC,
+    darkTheme: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkRedColorScheme
-        else -> LightRedColorScheme
+    val colorScheme = when (themeName) {
+        com.example.glarmto.data.preferences.ThemeManager.THEME_OCEAN -> OceanColorScheme
+        com.example.glarmto.data.preferences.ThemeManager.THEME_NEON -> NeonColorScheme
+        com.example.glarmto.data.preferences.ThemeManager.THEME_FOREST -> ForestColorScheme
+        com.example.glarmto.data.preferences.ThemeManager.THEME_AURA -> AuraColorScheme
+        else -> ClassicColorScheme // Default
     }
+
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 

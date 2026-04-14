@@ -45,12 +45,18 @@ object OpenFoodFactsApi {
                     val nutriments = product.optJSONObject("nutriments")
                     
                     if (nutriments != null) {
+                        // Prioritize per-serving data over 100g, as 100g doesn't usually match the box
+                        val calories = nutriments.optDouble("energy-kcal_serving", nutriments.optDouble("energy-kcal_100g", 0.0)).toInt()
+                        val protein = nutriments.optDouble("proteins_serving", nutriments.optDouble("proteins_100g", 0.0)).toInt()
+                        val carbs = nutriments.optDouble("carbohydrates_serving", nutriments.optDouble("carbohydrates_100g", 0.0)).toInt()
+                        val fats = nutriments.optDouble("fat_serving", nutriments.optDouble("fat_100g", 0.0)).toInt()
+
                         return@withContext BarcodeNutrition(
                             productName = product.optString("product_name", "Unknown Product"),
-                            calories = nutriments.optInt("energy-kcal_100g", 0),
-                            protein = nutriments.optInt("proteins_100g", 0),
-                            carbs = nutriments.optInt("carbohydrates_100g", 0),
-                            fats = nutriments.optInt("fat_100g", 0)
+                            calories = calories,
+                            protein = protein,
+                            carbs = carbs,
+                            fats = fats
                         )
                     }
                 }

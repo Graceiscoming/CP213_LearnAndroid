@@ -28,6 +28,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.runtime.collectAsState
 import com.example.glarmto.ui.calculator.CalculatorScreen
 import com.example.glarmto.ui.dashboard.DashboardScreen
 import com.example.glarmto.ui.login.WelcomeScreen
@@ -61,8 +62,10 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            GlarmToTheme {
-                val application = applicationContext as GlarmToApplication
+            val application = applicationContext as GlarmToApplication
+            val currentTheme by application.themeManager.currentTheme.collectAsState()
+
+            GlarmToTheme(themeName = currentTheme) {
                 val startDest = if (application.repository.getCurrentUser() != null) {
                     if (application.repository.isProfileSetup()) {
                         Screen.Dashboard.route
@@ -72,7 +75,13 @@ class MainActivity : ComponentActivity() {
                 } else {
                     "welcome"
                 }
-                MainScreen(startDest)
+
+                androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+                    if (currentTheme == com.example.glarmto.data.preferences.ThemeManager.THEME_AURA) {
+                        com.example.glarmto.ui.theme.AnimatedAuraBackground()
+                    }
+                    MainScreen(startDest)
+                }
             }
         }
     }
@@ -104,7 +113,6 @@ fun MainScreen(startDestination: String) {
         Screen.Dashboard,
         Screen.Routines,
         Screen.Workout,
-        Screen.Recovery,
         Screen.Nutrition,
         Screen.Calculator
     )
@@ -194,15 +202,22 @@ fun MainScreen(startDestination: String) {
                             popUpTo(0) { inclusive = true } // Clear the entire backstack completely
                         }
                     },
-                    onNavigateToHistory = {
-                        navController.navigate("history")
+                    onNavigateToHistory = { isMonthly ->
+                        val mode = if (isMonthly) "monthly" else "daily"
+                        navController.navigate("history?mode=$mode")
                     }
                 ) 
             }
-            composable("history") {
-                com.example.glarmto.ui.history.HistoryScreen(onBack = {
-                    navController.popBackStack()
-                })
+            composable(
+                "history?mode={mode}",
+                arguments = listOf(androidx.navigation.navArgument("mode") { defaultValue = "daily" })
+            ) { backStackEntry ->
+                val mode = backStackEntry.arguments?.getString("mode") ?: "daily"
+                val isMonthly = mode == "monthly"
+                com.example.glarmto.ui.history.HistoryScreen(
+                    isMonthly = isMonthly,
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable(Screen.Routines.route) { com.example.glarmto.ui.routines.RoutinesScreen() }
             composable(Screen.Workout.route) { WorkoutScreen() }

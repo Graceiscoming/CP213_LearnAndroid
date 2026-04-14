@@ -407,3 +407,42 @@
     *   **Native Speech Recognition:** เชื่อมต่อระบบแปลงเสียงกับ `RecognizerIntent` ของ Android OS ที่ดึงเอนจิ้นแปลงเสียงอันทรงพลังของ Google มาใช้ ข้อดีคือแอปเราไม่ต้องฝังโค้ดขออนุญาต (Permission) เข้าถึงไมโครโฟนให้ผู้ใช้อึดอัดใจเลย!
     *   **Advanced Regex Parser:** สร้างชุดคำสั่งตัวกรองข้อความ `parseVoiceCommand` เพื่อแกะประโยคคำพูด (รองรับได้ทั้งภาษาไทยและอังกฤษ) ให้หั่นออกมาเป็น [ชื่อท่า], [น้ำหนัก], และ [จำนวนครั้ง] ให้ตรงล็อค
     *   **Auto-Save & Magic Workflow:** เอาใจคนเล่นยิมมือเลอะเหงื่อ แค่กดไมค์ 🎤 แล้วตะโกน "Squat หนึ่งร้อยกิโล แปดครั้ง" ระบบจะแกะความหมาย เอาไปใส่ในช่อง และกดเซฟเซตให้โดยอัตโนมัติ พร้อมสั่นเตือน Haptic ลงมือถือให้รู้ว่าจดเสร็จแล้ว! อย่างเท่!
+
+---
+
+**วันที่อัปเดต:** 14 เมษายน 2026
+
+## 🚀 สรุปงานที่ทำในวันนี้ (Phase 5: Visual Excellence & UX Consolidation)
+
+วันนี้เราได้ยกระดับความสวยงามและประสบการณ์การใช้งาน (UX) ของแอปขึ้นไปอีกขั้น โดยเน้นไปที่ความพรีเมียมของดีไซน์ และการรวบรวมฟีเจอร์ให้ใช้งานง่ายขึ้น ลดความซับซ้อนของเมนูครับ
+
+### 1. ระบบดูประวัติรายเดือน (Monthly History View)
+*   **Monthly Data Grouping:** พัฒนาระบบจัดกลุ่มข้อมูลรายเดือนในหน้า History โดยจะรวบรวม Workout Sessions และ Nutrition ของทั้งเดือนมาแสดงผลแยกตามวันที่อย่างสวยงาม
+*   **Dual View Toggle:** เพิ่มเมนู Dropdown ที่หน้า Dashboard ให้ผู้ใช้เลือกได้ว่าจะดูประวัติแบบ "รายวัน" หรือ "รายเดือน"
+*   **ไฟล์ที่เกี่ยวข้อง:** `HistoryScreen.kt`, `HistoryViewModel.kt`, `GlarmToRepository.kt`
+
+### 2. ระบบตีมไดนามิก (Dynamic Themes System)
+*   **Theme Manager:** สร้างระบบจำตีมที่ผู้ใช้เลือก (Persistence) ทำให้เบลนด์เข้ากับบุคลิกของผู้ใช้ได้ 5 รูปแบบ:
+    *   **Classic GlarmTo:** แดด-ดำ ดุดัน
+    *   **Ocean Flow:** น้ำเงิน-เทล สบายตา (Contrast Optimized)
+    *   **Neon Energy:** เขียวนีออน Cyberpunk
+    *   **Forest Ground:** เขียวมะกอกแนวธรรมชาติ
+*   **ไฟล์ที่เกี่ยวข้อง:** `ThemeManager.kt`, `Theme.kt`, `Color.kt`, `DashboardScreen.kt`
+
+### 3. Aura 120Hz & Full Glassmorphism (Wow Factor!) ✨
+*   **High-Refresh Animation:** สร้างพื้นหลังแบบเคลื่อนไหว (Animated Canvas) สำหรับตีมพิเศษ "Aura 120Hz" ที่มีการไล่สีล่วงหน้าและขยับเป็นจังหวะชีพจร (Pulsing) อย่างไหลลื่น
+*   **Transparent UI Layer:** ปรับทุกหน้าจอให้เป็นแบบโปร่งแสง (Glassmorphism) เมื่อใช้ตีม Aura ทำให้เห็นแอนิเมชั่นวิ่งอยู่ข้างหลังตลอดเวลาทุกเมนู
+*   **ไฟล์ที่เกี่ยวข้อง:** `AnimatedAuraBackground.kt`, `MainActivity.kt`
+
+### 4. การปรับโครงสร้างเมนู (UX Consolidation)
+*   **Recovery Migration:** ย้ายฟีเจอร์ Muscle Recovery จากเมนูหลักด้านล่าง (Navbar) มาไว้ในหน้า Dashboard แทน โดยออกแบบให้เป็นส่วนที่พับเก็บได้ (Expandable Section) เพื่อลดความรกรุงรังของเมนู
+*   **ไฟล์ที่เกี่ยวข้อง:** `DashboardScreen.kt`, `MainActivity.kt`
+
+### 5. แก้วน้ำแอนิเมชั่น (Animated Water Glass) 🌊
+*   **Interactive Visualization:** เปลี่ยนหลอด Progress Bar น้ำเดิมๆ ให้กลายเป็น "แก้วน้ำจำลอง" ที่วาดด้วย Canvas
+*   **Smooth Fluid Motion:** เมื่อกดเติมน้ำ ระดับน้ำจะค่อยๆ เพิ่มขึ้น (fill animation) พร้อมมีระลอกคลื่น (Wave Effect) ขยับไปมาอย่างสมจริง เพิ่มความน่าดึงดูดในการดื่มน้ำ
+*   **ไฟล์ที่เกี่ยวข้อง:** `AnimatedWaterGlass.kt`, `NutritionScreen.kt`
+
+### 6. การปรับปรุงความถูกต้องของข้อมูล (Bug Fixes & Hardening)
+*   **Color Contrast Optimization:** ปรับแก้สัดส่วนสีในทุกตีม โดยเฉพาะ Ocean Flow เพื่อให้ตัวอักษรบนการ์ดอ่านง่ายขึ้น ไม่กลืนกับพื้นหลัง
+*   **Syntax Error Resolution:** เคลียร์ปัญหา Parenthesis/Bracket nesting ในหน้า History หลังจากการ refactor ครั้งใหญ่
