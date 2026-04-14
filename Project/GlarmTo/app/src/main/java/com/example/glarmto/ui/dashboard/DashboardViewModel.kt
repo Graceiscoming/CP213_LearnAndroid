@@ -54,6 +54,9 @@ class DashboardViewModel(
     val todayWorkouts: StateFlow<List<WorkoutEntity>> = repository.getWorkoutsForDay(getTodayStartMillis())
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val todaySessions: StateFlow<List<com.example.glarmto.data.local.entity.WorkoutSessionEntity>> = repository.getWorkoutSessionsForDay(getTodayStartMillis())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val todayNutrition: StateFlow<List<NutritionEntity>> = repository.getNutritionForDay(getTodayStartMillis())
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -118,7 +121,18 @@ class DashboardViewModel(
         }
     }
 
-    fun shareToInstagramStory(username: String, level: Int, streak: Int) {
+    fun shareToInstagramStory(
+        username: String, 
+        level: Int, 
+        streak: Int,
+        showProfile: Boolean = true,
+        showTime: Boolean = false,
+        timeText: String = "",
+        showCalories: Boolean = false,
+        caloriesText: String = "",
+        showExercises: Boolean = false,
+        exercisesText: String = ""
+    ) {
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val bitmap = android.graphics.Bitmap.createBitmap(1080, 1920, android.graphics.Bitmap.Config.ARGB_8888)
@@ -133,16 +147,41 @@ class DashboardViewModel(
                     typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
                 }
                 
-                canvas.drawText("GLARMTO \uD83D\uDCAA", 540f, 500f, paint)
+                var currentY = 500f
+                canvas.drawText("GLARMTO \uD83D\uDCAA", 540f, currentY, paint)
                 
-                paint.textSize = 80f
-                paint.color = android.graphics.Color.parseColor("#E53935")
-                canvas.drawText("@$username", 540f, 800f, paint)
+                if (showProfile) {
+                    currentY += 200f
+                    paint.textSize = 80f
+                    paint.color = android.graphics.Color.parseColor("#E53935")
+                    canvas.drawText("@$username", 540f, currentY, paint)
+                    
+                    paint.color = android.graphics.Color.LTGRAY
+                    paint.textSize = 60f
+                    currentY += 120f
+                    canvas.drawText("LVL: $level", 540f, currentY, paint)
+                    currentY += 100f
+                    canvas.drawText("Streak: $streak days\uD83D\uDD25", 540f, currentY, paint)
+                }
                 
-                paint.color = android.graphics.Color.LTGRAY
-                paint.textSize = 60f
-                canvas.drawText("LVL: $level", 540f, 1000f, paint)
-                canvas.drawText("Streak: $streak days\uD83D\uDD25", 540f, 1150f, paint)
+                paint.color = android.graphics.Color.WHITE
+                paint.textSize = 70f
+                if (showTime && timeText.isNotBlank()) {
+                    currentY += 150f
+                    canvas.drawText("⏱ $timeText", 540f, currentY, paint)
+                }
+                
+                if (showCalories && caloriesText.isNotBlank()) {
+                    currentY += 120f
+                    canvas.drawText("\uD83D\uDD25 $caloriesText", 540f, currentY, paint)
+                }
+                
+                if (showExercises && exercisesText.isNotBlank()) {
+                    currentY += 120f
+                    paint.color = android.graphics.Color.parseColor("#448AFF")
+                    canvas.drawText("⚡ $exercisesText", 540f, currentY, paint)
+                }
+
                 
                 val imagesDir = java.io.File(application.cacheDir, "images")
                 imagesDir.mkdirs()

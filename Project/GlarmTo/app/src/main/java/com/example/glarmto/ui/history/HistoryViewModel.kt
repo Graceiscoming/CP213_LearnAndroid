@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -26,30 +27,39 @@ class HistoryViewModel(
     private val _selectedDate = MutableStateFlow(CalendarDayUtils.localTodayStartMillis())
     val selectedDate: StateFlow<Long> = _selectedDate.asStateFlow()
 
+    private val _isMonthlyView = MutableStateFlow(false)
+    val isMonthlyView: StateFlow<Boolean> = _isMonthlyView.asStateFlow()
+
     @kotlinx.coroutines.ExperimentalCoroutinesApi
-    val workouts: StateFlow<List<WorkoutEntity>> = _selectedDate
-        .flatMapLatest { date ->
+    val workouts: StateFlow<List<WorkoutEntity>> = combine(_selectedDate, _isMonthlyView) { date, isMonthly -> Pair(date, isMonthly) }
+        .flatMapLatest { (date, isMonthly) ->
             val cal = Calendar.getInstance().apply { timeInMillis = date }
-            val (start, end) = repository.getDayRange(cal)
+            val (start, end) = if (isMonthly) repository.getMonthRange(cal) else repository.getDayRange(cal)
             repository.getWorkoutsForRange(start, end)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     @kotlinx.coroutines.ExperimentalCoroutinesApi
-    val nutrition: StateFlow<List<NutritionEntity>> = _selectedDate
-        .flatMapLatest { date ->
+    val nutrition: StateFlow<List<NutritionEntity>> = combine(_selectedDate, _isMonthlyView) { date, isMonthly -> Pair(date, isMonthly) }
+        .flatMapLatest { (date, isMonthly) ->
             val cal = Calendar.getInstance().apply { timeInMillis = date }
-            val (start, end) = repository.getDayRange(cal)
+            val (start, end) = if (isMonthly) repository.getMonthRange(cal) else repository.getDayRange(cal)
             repository.getNutritionForRange(start, end)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     @kotlinx.coroutines.ExperimentalCoroutinesApi
-    val sessions: StateFlow<List<com.example.glarmto.data.local.entity.WorkoutSessionEntity>> = _selectedDate
-        .flatMapLatest { date ->
-            repository.getWorkoutSessionsForDay(date)
+    val sessions: StateFlow<List<com.example.glarmto.data.local.entity.WorkoutSessionEntity>> = combine(_selectedDate, _isMonthlyView) { date, isMonthly -> Pair(date, isMonthly) }
+        .flatMapLatest { (date, isMonthly) ->
+            val cal = Calendar.getInstance().apply { timeInMillis = date }
+            val (start, end) = if (isMonthly) repository.getMonthRange(cal) else repository.getDayRange(cal)
+            repository.getWorkoutSessionsForRange(start, end)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun setViewMode(isMonthly: Boolean) {
+        _isMonthlyView.value = isMonthly
+    }
 
     fun deleteWorkout(id: Int) {
         viewModelScope.launch {

@@ -207,13 +207,22 @@ fun NutritionScreen() {
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Water (this day)", fontWeight = FontWeight.Bold)
-                Text("$totalWater / $waterGoal ml", fontWeight = FontWeight.SemiBold)
-                LinearProgressIndicator(
-                    progress = {
-                        if (waterGoal > 0) (totalWater.toFloat() / waterGoal).coerceIn(0f, 1f) else 0f
-                    },
-                    modifier = Modifier.fillMaxWidth().height(10.dp)
-                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    com.example.glarmto.ui.nutrition.AnimatedWaterGlass(
+                        fillPercentage = if (waterGoal > 0) (totalWater.toFloat() / waterGoal) else 0f,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("${totalWater}", fontWeight = FontWeight.ExtraBold, fontSize = 28.sp, color = MaterialTheme.colorScheme.primary)
+                        Text("/ $waterGoal ml", fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
                 if (isNutritionDateValid) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = { viewModel.addWater(250) }) { Text("+250 ml") }

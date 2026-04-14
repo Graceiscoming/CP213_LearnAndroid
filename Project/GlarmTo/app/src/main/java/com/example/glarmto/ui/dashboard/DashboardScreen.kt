@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.LocalDrink
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,14 +22,35 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.glarmto.GlarmToApplication
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
+import com.example.glarmto.ui.workout.RecoveryViewModel
+import com.example.glarmto.ui.workout.RecoveryViewModelFactory
+import com.example.glarmto.ui.workout.RecoveryBarItem
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 
 @Composable
-fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: () -> Unit = {}) {
+fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: (isMonthly: Boolean) -> Unit = {}) {
     val context = LocalContext.current
     val application = context.applicationContext as GlarmToApplication
     val viewModel: DashboardViewModel = viewModel(
         factory = DashboardViewModelFactory(application, application.repository)
     )
+
+    val recoveryViewModel: RecoveryViewModel = viewModel(
+        factory = RecoveryViewModelFactory(application.repository)
+    )
+
+    val recoveryStatus by recoveryViewModel.recoveryStatus.collectAsState()
+    val smartRecommendation by recoveryViewModel.smartRecommendation.collectAsState()
+    var showRecovery by remember { mutableStateOf(false) }
+
+    LaunchedEffect(showRecovery) {
+        if (showRecovery) {
+            recoveryViewModel.fetchAndCalculateRecovery()
+        }
+    }
 
     val workouts by viewModel.todayWorkouts.collectAsState()
     val nutritions by viewModel.todayNutrition.collectAsState()
@@ -42,6 +64,13 @@ fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: () -> Unit =
     val waterGoal by viewModel.waterGoalMl.collectAsState()
     val heatmapData by viewModel.heatmapData.collectAsState()
     val radarData by viewModel.radarChartData.collectAsState()
+    val sessions by viewModel.todaySessions.collectAsState()
+
+    var showIgCustomizer by remember { mutableStateOf(false) }
+    var igShowProfile by remember { mutableStateOf(true) }
+    var igShowTime by remember { mutableStateOf(false) }
+    var igShowCalories by remember { mutableStateOf(false) }
+    var igShowExercises by remember { mutableStateOf(false) }
 
     val level = user?.level ?: 1
     val xp = user?.xp ?: 0
@@ -56,6 +85,61 @@ fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: () -> Unit =
 
     val totalSets = workouts.size
     val totalVolume = workouts.sumOf { it.weight * it.reps }
+
+    if (showIgCustomizer) {
+        AlertDialog(
+            onDismissRequest = { showIgCustomizer = false },
+            title = { Text("Customize IG Story", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = igShowProfile, onCheckedChange = { igShowProfile = it })
+                        Text("Show Profile (Level, Streak)")
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = igShowTime, onCheckedChange = { igShowTime = it })
+                        Text("Show Workout Time")
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = igShowCalories, onCheckedChange = { igShowCalories = it })
+                        Text("Show Calories Burned (Estimated)")
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = igShowExercises, onCheckedChange = { igShowExercises = it })
+                        Text("Show Exercises Summary")
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    val durationMinutes = sessions.sumOf { it.durationSeconds } / 60
+                    val timeStr = if (durationMinutes > 0) "${durationMinutes} min" else "< 1 min"
+                    val caloriesStr = "${durationMinutes * 5} kcal"
+                    val exercisesStr = "Sets: ${workouts.size} | Vol: ${totalVolume} kg"
+
+                    val username = application.repository.getCurrentUser() ?: "Guest"
+                    viewModel.shareToInstagramStory(
+                        username = username,
+                        level = level,
+                        streak = trainingStreak,
+                        showProfile = igShowProfile,
+                        showTime = igShowTime,
+                        timeText = "Duration: $timeStr",
+                        showCalories = igShowCalories,
+                        caloriesText = "Burned: $caloriesStr",
+                        showExercises = igShowExercises,
+                        exercisesText = exercisesStr
+                    )
+                    showIgCustomizer = false
+                }) {
+                    Text("Share Now")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showIgCustomizer = false }) { Text("Cancel") }
+            }
+        )
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -97,8 +181,50 @@ fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: () -> Unit =
                     }
                 }
                 Row {
-                    IconButton(onClick = onNavigateToHistory) {
-                        Icon(Icons.Filled.History, contentDescription = "History")
+                    var showHistoryMenu by remember { mutableStateOf(false) }
+                    Box {
+                        IconButton(onClick = { showHistoryMenu = true }) {
+                            Icon(Icons.Filled.History, contentDescription = "History")
+                        }
+                        DropdownMenu(
+                            expanded = showHistoryMenu,
+                            onDismissRequest = { showHistoryMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Daily View (ประวัติรายวัน)") },
+                                onClick = { 
+                                    showHistoryMenu = false
+                                    onNavigateToHistory(false) 
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Monthly View (ประวัติรายเดือน)") },
+                                onClick = { 
+                                    showHistoryMenu = false
+                                    onNavigateToHistory(true) 
+                                }
+                            )
+                        }
+                    }
+                    var showThemeMenu by remember { mutableStateOf(false) }
+                    Box {
+                        IconButton(onClick = { showThemeMenu = true }) {
+                            Icon(Icons.Filled.Palette, contentDescription = "Themes")
+                        }
+                        DropdownMenu(
+                            expanded = showThemeMenu,
+                            onDismissRequest = { showThemeMenu = false }
+                        ) {
+                            com.example.glarmto.data.preferences.ThemeManager.availableThemes.forEach { themeName ->
+                                DropdownMenuItem(
+                                    text = { Text(themeName) },
+                                    onClick = { 
+                                        showThemeMenu = false
+                                        application.themeManager.setTheme(themeName)
+                                    }
+                                )
+                            }
+                        }
                     }
                     IconButton(onClick = onLogout) {
                         Icon(Icons.Filled.Logout, contentDescription = "Logout", tint = MaterialTheme.colorScheme.error)
@@ -112,8 +238,7 @@ fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: () -> Unit =
             ) {
                 Button(
                     onClick = { 
-                        val username = application.repository.getCurrentUser() ?: "Guest"
-                        viewModel.shareToInstagramStory(username, level, trainingStreak) 
+                        showIgCustomizer = true
                     }, 
                     modifier = Modifier.weight(1f)
                 ) {
@@ -322,6 +447,52 @@ fun DashboardScreen(onLogout: () -> Unit = {}, onNavigateToHistory: () -> Unit =
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(day, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth().clickable { showRecovery = !showRecovery },
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("💪 Muscle Recovery", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        Icon(
+                            imageVector = if (showRecovery) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                            contentDescription = null
+                        )
+                    }
+
+                    AnimatedVisibility(visible = showRecovery) {
+                        Column(
+                            modifier = Modifier.padding(top = 16.dp).fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text("AI Recommendation", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                    Text(smartRecommendation, fontSize = 14.sp)
+                                }
+                            }
+
+                            if (recoveryStatus.isEmpty()) {
+                                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                            } else {
+                                recoveryStatus.forEach { status ->
+                                    RecoveryBarItem(status = status)
                                 }
                             }
                         }

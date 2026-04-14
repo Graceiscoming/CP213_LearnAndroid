@@ -815,7 +815,7 @@ fun WorkoutScreen() {
                                             val w = weight.trim().toDoubleOrNull() ?: 0.0
                                             val r = reps.trim().toIntOrNull() ?: 0
 
-                                            if (exerciseName.isNotBlank() && w > 0 && r > 0) {
+                                            if (exerciseName.isNotBlank() && w >= 0 && r > 0) {
                                                 val rpeVal =
                                                     rpe.trim().toIntOrNull()?.coerceIn(1, 10)
                                                 viewModel.addWorkout(
