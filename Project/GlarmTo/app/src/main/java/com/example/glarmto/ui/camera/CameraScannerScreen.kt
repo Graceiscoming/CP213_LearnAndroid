@@ -52,6 +52,28 @@ fun CameraScannerScreen(
     val coroutineScope = rememberCoroutineScope()
     
     var isProcessing by remember { mutableStateOf(false) }
+    val ignoredBarcodes = remember { mutableStateListOf<String>() }
+    var notFoundBarcode by remember { mutableStateOf<String?>(null) }
+
+    if (notFoundBarcode != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                ignoredBarcodes.add(notFoundBarcode!!)
+                notFoundBarcode = null
+            },
+            title = { Text("Product Not Found", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
+            text = { Text("ไม่พบข้อมูลสินค้าจากบาร์โค้ดนี้ในระบบ คุณต้องการสแกนบาร์โค้ดอื่นต่อ หรือ กลับไปพิมพ์ข้อมูลเอง?") },
+            confirmButton = {
+                Button(onClick = { onCancel() }) { Text("พิมพ์ข้อมูลเอง") }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    ignoredBarcodes.add(notFoundBarcode!!)
+                    notFoundBarcode = null 
+                }) { Text("สแกนชิ้นอื่นต่อ") }
+            }
+        )
+    }
 
     LaunchedEffect(Unit) {
         if (!cameraPermissionState.status.isGranted) {
@@ -104,13 +126,14 @@ fun CameraScannerScreen(
                                         .addOnSuccessListener { barcodes ->
                                             if (barcodes.isNotEmpty()) {
                                                 val rawValue = barcodes.first().rawValue
-                                                if (!rawValue.isNullOrBlank()) {
+                                                if (!rawValue.isNullOrBlank() && !ignoredBarcodes.contains(rawValue)) {
                                                     isProcessing = true
                                                     coroutineScope.launch {
                                                         val result = OpenFoodFactsApi.getNutritionByBarcode(rawValue)
                                                         if (result != null) {
                                                             onResult(result)
                                                         } else {
+                                                            notFoundBarcode = rawValue
                                                             isProcessing = false
                                                         }
                                                     }

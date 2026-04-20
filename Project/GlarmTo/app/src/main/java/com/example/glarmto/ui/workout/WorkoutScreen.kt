@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.glarmto.GlarmToApplication
 import com.example.glarmto.data.util.ExercisePresets
+import com.example.glarmto.data.util.NetworkUtil
 import com.example.glarmto.ui.theme.GlarmToTheme
 import com.example.glarmto.ui.workout.AiPoseTrackerScreen
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -210,6 +211,18 @@ fun WorkoutScreen() {
     var showRoutineDialog by remember { mutableStateOf(false) }
     var showAiGeneratorSheet by remember { mutableStateOf(false) }
     var showAiPoseTracker by remember { mutableStateOf(false) }
+    var showNoInternetDialog by remember { mutableStateOf(false) }
+
+    if (showNoInternetDialog) {
+        AlertDialog(
+            onDismissRequest = { showNoInternetDialog = false },
+            title = { Text("No Internet Connection", fontWeight = FontWeight.Bold) },
+            text = { Text("กรุณาเชื่อมต่อ internet เพื่อใช้งานฟังก์ชันนี้ (Please connect to the internet to use this feature.)") },
+            confirmButton = {
+                TextButton(onClick = { showNoInternetDialog = false }) { Text("OK") }
+            }
+        )
+    }
 
     if (showAiPoseTracker) {
         AiPoseTrackerScreen(onClose = { showAiPoseTracker = false })
@@ -427,7 +440,13 @@ fun WorkoutScreen() {
                                 Text("START", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                             }
                             OutlinedButton(
-                                onClick = { showAiGeneratorSheet = true },
+                                onClick = { 
+                                    if (NetworkUtil.isInternetAvailable(context)) {
+                                        showAiGeneratorSheet = true 
+                                    } else {
+                                        showNoInternetDialog = true
+                                    }
+                                },
                                 modifier = Modifier.weight(1f).height(64.dp)
                             ) {
                                 Icon(Icons.Filled.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -679,14 +698,18 @@ fun WorkoutScreen() {
                                 Text("Log Exercise", fontWeight = FontWeight.SemiBold)
                                 IconButton(
                                     onClick = {
-                                        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                                            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                                            putExtra(RecognizerIntent.EXTRA_PROMPT, "Say e.g.: Squat 100 kg 8 reps")
-                                        }
-                                        try {
-                                            speechLauncher.launch(intent)
-                                        } catch (e: Exception) {
-                                            // Ignore if no speech recognition support
+                                        if (NetworkUtil.isInternetAvailable(context)) {
+                                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                                putExtra(RecognizerIntent.EXTRA_PROMPT, "Say e.g.: Squat 100 kg 8 reps")
+                                            }
+                                            try {
+                                                speechLauncher.launch(intent)
+                                            } catch (e: Exception) {
+                                                // Ignore if no speech recognition support
+                                            }
+                                        } else {
+                                            showNoInternetDialog = true
                                         }
                                     },
                                     modifier = Modifier.padding(start = 4.dp).size(32.dp)

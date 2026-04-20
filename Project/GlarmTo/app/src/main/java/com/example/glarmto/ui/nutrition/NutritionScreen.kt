@@ -28,6 +28,7 @@ import java.util.Date
 import java.util.Locale
 import com.example.glarmto.ui.camera.CameraScannerScreen
 import com.example.glarmto.ui.camera.ScannerMode
+import com.example.glarmto.data.util.NetworkUtil
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +80,19 @@ fun NutritionScreen() {
             onCancel = { activeScannerMode = null }
         )
         return // Take over the entire screen while scanning
+    }
+
+    var showNoInternetDialog by remember { mutableStateOf(false) }
+
+    if (showNoInternetDialog) {
+        AlertDialog(
+            onDismissRequest = { showNoInternetDialog = false },
+            title = { Text("No Internet Connection", fontWeight = FontWeight.Bold) },
+            text = { Text("กรุณาเชื่อมต่อ internet เพื่อใช้งานฟังก์ชันนี้ (Please connect to the internet to use this feature.)") },
+            confirmButton = {
+                TextButton(onClick = { showNoInternetDialog = false }) { Text("OK") }
+            }
+        )
     }
 
     var showDatePicker by remember { mutableStateOf(false) }
@@ -295,7 +309,13 @@ fun NutritionScreen() {
                     
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         OutlinedButton(
-                            onClick = { activeScannerMode = ScannerMode.BARCODE },
+                            onClick = {
+                                if (NetworkUtil.isInternetAvailable(context)) {
+                                    activeScannerMode = ScannerMode.BARCODE
+                                } else {
+                                    showNoInternetDialog = true
+                                }
+                            },
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Scan Barcode")
