@@ -211,7 +211,7 @@ fun AiPoseTrackerScreen(onClose: () -> Unit) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
-                verticalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Row(
@@ -222,6 +222,8 @@ fun AiPoseTrackerScreen(onClose: () -> Unit) {
                         Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
                     }
                 }
+                
+                Spacer(modifier = Modifier.weight(1f))
                 
                 Surface(
                     color = if (feedbackText == "Good Depth!") Color(0xFF4CAF50).copy(alpha = 0.8f) else MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
@@ -235,7 +237,7 @@ fun AiPoseTrackerScreen(onClose: () -> Unit) {
                     )
                 }
                 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(64.dp))
             }
         }
     } else {
