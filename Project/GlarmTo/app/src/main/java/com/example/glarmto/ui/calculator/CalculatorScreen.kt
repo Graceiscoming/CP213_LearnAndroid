@@ -296,7 +296,7 @@ fun ProfileEditor(viewModel: CalculatorViewModel) {
                             }
                         }
 
-                        Text("Workout Days per Week: ${editWorkoutDays.toInt()}", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+                        Text("Workout Days per Week: ${editWorkoutDays.roundToInt()}", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
                         Slider(
                             value = editWorkoutDays,
                             onValueChange = { editWorkoutDays = it },
@@ -347,7 +347,7 @@ fun ProfileEditor(viewModel: CalculatorViewModel) {
                                 val w = editWeight.trim().toDoubleOrNull() ?: u.weight
                                 val h = editHeight.trim().toDoubleOrNull() ?: u.height
                                 val r = editRestTime.trim().toIntOrNull() ?: u.defaultRestSeconds
-                                val days = editWorkoutDays.toInt()
+                                val days = editWorkoutDays.roundToInt()
                                 val mp = editMacroP.toIntOrNull() ?: u.macroProteinPct
                                 val mc = editMacroC.toIntOrNull() ?: u.macroCarbPct
                                 val mf = editMacroF.toIntOrNull() ?: u.macroFatPct

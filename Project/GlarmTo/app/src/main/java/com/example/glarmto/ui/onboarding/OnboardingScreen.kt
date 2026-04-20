@@ -112,7 +112,7 @@ fun OnboardingScreen(onComplete: () -> Unit) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Workout Days per Week: ${workoutDays.toInt()}", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        Text("Workout Days per Week: ${workoutDays.roundToInt()}", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
         Slider(
             value = workoutDays,
             onValueChange = { workoutDays = it },
@@ -135,7 +135,7 @@ fun OnboardingScreen(onComplete: () -> Unit) {
 
                 if (a > 0 && w > 0 && h > 0) {
                     showError = false
-                    val days = workoutDays.toInt()
+                    val days = workoutDays.roundToInt()
                     val tdeeResult = HealthCalculator.calculateTdee(a, w, h, isMale, days, goal)
 
                     coroutineScope.launch {
