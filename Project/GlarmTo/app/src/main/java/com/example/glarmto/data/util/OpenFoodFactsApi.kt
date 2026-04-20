@@ -64,6 +64,8 @@ object OpenFoodFactsApi {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        return@withContext null
+        
+        // 🚨 Fallback: ถ้า API ไม่เจอ ให้ลองค้นหาในคลังข้อมูลจำลองของแอป (Database 7-11 ของเราเอง!)
+        return@withContext ThaiProductDatabase.database[barcode]
     }
 }

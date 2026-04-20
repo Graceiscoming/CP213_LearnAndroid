@@ -14,14 +14,13 @@ object NutritionOcrParser {
         var carbs = 0
         var fats = 0
 
-        // Example regex: looks for "protein" followed by any characters then digits then maybe "g"
-        val proteinRegex = Regex("(?i)protein.*?(\\d+)")
-        val carbsRegex = Regex("(?i)carb.*?(\\d+)")
-        val fatRegex = Regex("(?i)fat.*?(\\d+)")
-        val kcalRegex = Regex("(?i)(?:energy|kcal|calories).*?(\\d+)")
+        // รองรับทั้งฉลากภาษาอังกฤษ และฉลากโภชนาการภาษาไทย
+        val proteinRegex = Regex("(?i)(?:protein|โปรตีน).*?(\\d+)")
+        val carbsRegex = Regex("(?i)(?:carb|คาร์โบไฮเดรต|คาร์บ).*?(\\d+)")
+        val fatRegex = Regex("(?i)(?:fat|ไขมัน).*?(\\d+)")
+        val kcalRegex = Regex("(?i)(?:energy|kcal|calories|พลังงาน|แคลอรี|กิโลแคลอรี).*?(\\d+)")
 
         val flattenedText = rawText.replace("\n", " ").replace("\r", " ")
-
         proteinRegex.find(flattenedText)?.let { protein = it.groupValues[1].toIntOrNull() ?: 0 }
         carbsRegex.find(flattenedText)?.let { carbs = it.groupValues[1].toIntOrNull() ?: 0 }
         fatRegex.find(flattenedText)?.let { fats = it.groupValues[1].toIntOrNull() ?: 0 }
