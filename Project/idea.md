@@ -53,3 +53,4 @@ AI Coach Suggestions: เชื่อมต่อกับ AI (เช่น Open
 Social Sharing (Flex Mode): สร้างรูปภาพสรุปการฝึกสวยๆ (Infographic) พร้อมแปะ Logo "GlarmTo" ให้ผู้ใช้กด Share ลง Instagram Story ได้ทันที
 Barcode Scanner: ใช้กล้องมือถือสแกนบาร์โค้ดขนมเซเว่น แล้วดึงค่าโภชนาการมาลงแอปอัตโนมัติ
 Cloud Sync: เชื่อมต่อ Firebase เพื่อให้ข้อมูลไม่หายเวลาเปลี่ยนเครื่อง
+
