@@ -657,6 +657,8 @@ object ThaiProductDatabase {
         "8851009000129" to BarcodeNutrition("ลูกชุบ 7-Fresh", 140, 2, 32, 0),
         "8851009000130" to BarcodeNutrition("น้ำแข็งไสรวมมิตร 7-Fresh", 190, 1, 40, 3),
 
+        
+
 
     )
 }
