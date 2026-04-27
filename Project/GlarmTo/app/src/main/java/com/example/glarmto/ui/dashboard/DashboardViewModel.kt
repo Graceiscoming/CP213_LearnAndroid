@@ -22,10 +22,18 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.glarmto.data.util.InstagramShareHelper
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+/**
+ * ViewModel for the Dashboard Screen.
+ * 
+ * Responsible for gathering and formatting daily statistics (workouts, nutrition, water),
+ * calculating XP, streaks, and formatting chart data. Uses StateFlow to emit state
+ * to the UI in a lifecycle-aware manner.
+ */
 class DashboardViewModel(
     private val application: Application,
     private val repository: GlarmToRepository
@@ -121,6 +129,9 @@ class DashboardViewModel(
         }
     }
 
+    /**
+     * Delegates Instagram Story sharing to the utility class to maintain SRP.
+     */
     fun shareToInstagramStory(
         username: String, 
         level: Int, 
@@ -134,87 +145,19 @@ class DashboardViewModel(
         exercisesText: String = ""
     ) {
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            try {
-                val bitmap = android.graphics.Bitmap.createBitmap(1080, 1920, android.graphics.Bitmap.Config.ARGB_8888)
-                val canvas = android.graphics.Canvas(bitmap)
-                canvas.drawColor(android.graphics.Color.parseColor("#1A1A1A"))
-                
-                val paint = android.graphics.Paint().apply {
-                    color = android.graphics.Color.WHITE
-                    textSize = 120f
-                    textAlign = android.graphics.Paint.Align.CENTER
-                    isAntiAlias = true
-                    typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
-                }
-                
-                var currentY = 500f
-                canvas.drawText("GLARMTO \uD83D\uDCAA", 540f, currentY, paint)
-                
-                if (showProfile) {
-                    currentY += 200f
-                    paint.textSize = 80f
-                    paint.color = android.graphics.Color.parseColor("#E53935")
-                    canvas.drawText("@$username", 540f, currentY, paint)
-                    
-                    paint.color = android.graphics.Color.LTGRAY
-                    paint.textSize = 60f
-                    currentY += 120f
-                    canvas.drawText("LVL: $level", 540f, currentY, paint)
-                    currentY += 100f
-                    canvas.drawText("Streak: $streak days\uD83D\uDD25", 540f, currentY, paint)
-                }
-                
-                paint.color = android.graphics.Color.WHITE
-                paint.textSize = 70f
-                if (showTime && timeText.isNotBlank()) {
-                    currentY += 150f
-                    canvas.drawText("⏱ $timeText", 540f, currentY, paint)
-                }
-                
-                if (showCalories && caloriesText.isNotBlank()) {
-                    currentY += 120f
-                    canvas.drawText("\uD83D\uDD25 $caloriesText", 540f, currentY, paint)
-                }
-                
-                if (showExercises && exercisesText.isNotBlank()) {
-                    currentY += 120f
-                    paint.color = android.graphics.Color.parseColor("#448AFF")
-                    canvas.drawText("⚡ $exercisesText", 540f, currentY, paint)
-                }
-
-                
-                val imagesDir = java.io.File(application.cacheDir, "images")
-                imagesDir.mkdirs()
-                val imageFile = java.io.File(imagesDir, "glarmto_story.png")
-                val fos = java.io.FileOutputStream(imageFile)
-                bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, fos)
-                fos.close()
-                
-                try {
-                    val uri = androidx.core.content.FileProvider.getUriForFile(
-                        application,
-                        "${application.packageName}.fileprovider",
-                        imageFile
-                    )
-                    
-                    val intent = Intent(Intent.ACTION_SEND).apply {
-                        type = "image/png"
-                        putExtra(Intent.EXTRA_STREAM, uri)
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                    
-                    withContext(kotlinx.coroutines.Dispatchers.Main) {
-                        val chooser = Intent.createChooser(intent, "Share to Story")
-                        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        application.startActivity(chooser)
-                    }
-                } catch (e: IllegalArgumentException) {
-                    // Ignore FileProvider failures in Robolectric tests
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            InstagramShareHelper.shareToInstagramStory(
+                context = application,
+                username = username,
+                level = level,
+                streak = streak,
+                showProfile = showProfile,
+                showTime = showTime,
+                timeText = timeText,
+                showCalories = showCalories,
+                caloriesText = caloriesText,
+                showExercises = showExercises,
+                exercisesText = exercisesText
+            )
         }
     }
 

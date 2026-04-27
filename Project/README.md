@@ -9,37 +9,97 @@
     <img src="https://img.shields.io/badge/Kotlin-0095D5?&style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin">
     <img src="https://img.shields.io/badge/Jetpack_Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white" alt="Jetpack Compose">
     <img src="https://img.shields.io/badge/Machine_Learning-FF6F00?style=for-the-badge&logo=google&logoColor=white" alt="ML Kit">
+    <img src="https://img.shields.io/badge/Architecture-MVVM-blue?style=for-the-badge" alt="MVVM">
   </p>
 </div>
 
 ---
 
-## 🌟 About The Project
+## 🌟 About The Project (ภาพรวมโปรเจกต์)
 
-**GlarmTo** เป็นแอปพลิเคชันสายสุขภาพและฟิตเนสสุดล้ำ ที่ออกแบบมาเพื่อแก้ปัญหาการจดจำและบันทึกการออกกำลังกายที่น่าเบื่อหน่าย โดยดึงเอาเทคโนโลยี **AI** และ **Gamification (ระบบเกมเมอร์)** เข้ามาช่วยให้การปั้นหุ่นกลายเป็นเรื่องสนุก รวดเร็ว และล้ำสมัยกว่าเดิม!
+**GlarmTo (กล้ามโต)** ไม่ใช่แค่แอปพลิเคชันจดบันทึกการออกกำลังกายธรรมดา แต่เป็น **"ผู้ช่วยส่วนตัวอัจฉริยะ"** ที่รวมเอาเทคโนโลยี **AI** และศาสตร์ของ **Gamification** เข้าด้วยกัน เพื่อลบภาพจำการจดบันทึกที่น่าเบื่อ ให้กลายเป็นการเล่นเกมที่คุณอยากเอาชนะตัวเองในทุกๆ วัน
 
-เราไม่ได้สร้างแค่แอปบันทึกข้อมูล แต่เราเปลี่ยนยิมให้กลายเป็นเกมที่คุณอยากเล่นทุกวัน
+เอกสารฉบับนี้จัดทำขึ้นเพื่อแสดงให้เห็นถึง **"ศักยภาพและสถาปัตยกรรมเชิงลึก"** ของแอปพลิเคชัน โดยรวบรวมรายละเอียดฟังก์ชันทั้งหมด โครงสร้างไฟล์ และเทคนิคการเขียนโค้ด เพื่อให้อาจารย์ผู้อ่านสามารถเข้าใจการทำงานของแอปได้ทะลุปรุโปร่งเห็นภาพชัดเจนแม้ไม่ได้ทำการรันโค้ดด้วยตัวเอง
 
-## ✨ Core Features (Wow Factors)
+---
 
-### 🤖 1. AI & Smart Technologies
-- 🎙️ **Voice-to-Text Workout Logging:** หมดยุคพิมพ์มือตอนเหงื่อเต็ม! สั่งการด้วยเสียง (เช่น *"สควอท 100 กิโล 8 ครั้ง"*) ระบบ NLP จะดึงเอาชื่อท่า น้ำหนัก และจำนวนครั้งไปบันทึกอัตโนมัติ (รองรับไทย-อังกฤษ)
-- 📹 **AI Form Tracker (Pose Detection):** กล้องมือถือผสาน **Google ML Kit** สแกนจุดกระดูก (Skeleton) แบบ Real-time เพื่อคอยเช็คฟอร์มและการเคลื่อนไหว (เช่น ความลึกของการ Squat)
-- 🧠 **AI Workout Generator:** สร้างแผนการซ้อมรายวัน (Routines) แบบ Customized ให้คุณเสร็จสรรพ
+## 🔥 Comprehensive Feature List (ฟีเจอร์ทั้งหมดที่แอปทำได้)
 
-### 🎮 2. Gamification & Dashboard
-- 📊 **GitHub-Style Heatmap:** ตรวจจับความสม่ำเสมอด้วยตารางสีเขียวแบบ GitHub สร้าง Streak (การฝึกต่อเนื่อง) ให้มีไฟตลอดเวลา
-- 🏅 **Level & XP System:** ทุกเซ็ตที่ยก แปลงเป็นค่า XP ให้หลอดเลเวลอัป 
-- 📱 **Social Sharing:** สร้างการ์ดสถิติสวยๆ กดแชร์ลง Instagram Story อวดความขยันได้ทันที
+แอปพลิเคชันถูกแบ่งออกเป็น 5 หมวดหมู่การใช้งานหลัก ซึ่งครอบคลุมทุกมิติของ Fitness Lifestyle:
 
-### ⏱️ 3. Workout Control & OS-Level Features
-- 🕒 **Picture-in-Picture (PiP) Rest Timer:** นาฬิกาจับเวลาพักลอยเป็นหน้าต่างเล็กๆ ทับหน้าจอ สลับแอปเล่น Facebook, IG ได้สบายใจ ไม่ต้องกลัวพักเพลิน
-- 🎉 **Post-Workout Summary:** ฉลองจบความเหนื่อยด้วยพลุ (Confetti) พร้อมประเมินค่า Exhaustion
-- 📈 **Smart Exercise Suggestions:** ระบบ Auto-suggest เรียนรู้พฤติกรรม เดาท่าต่อไปที่คุณจะเล่น
+### 🤖 1. AI & Smart Technologies (ระบบอัจฉริยะ)
+*   🎙️ **Voice-to-Text Workout Logging:** ระบบบันทึกเซ็ตด้วยเสียง เพียงกดไมค์แล้วพูด เช่น *"สควอท 100 กิโล 8 ครั้ง"* ระบบจะใช้อัลกอริทึม NLP ดึงชื่อท่า น้ำหนัก และจำนวนครั้งไปกรอกให้อัตโนมัติ (รองรับคำสั่งภาษาไทยและอังกฤษ)
+*   📹 **AI Form Tracker (Pose Detection):** ใช้กล้องมือถือสแกนผ่าน **Google ML Kit** เพื่อจับจุดข้อต่อร่างกาย (Skeleton) แบบ Real-time คอยเช็คความลึกของการ Squat และการเคลื่อนไหว
+*   🧠 **AI Workout Generator:** สุ่มสร้างแผนการซ้อมรายวัน (Customized Routines) ให้ผู้ใช้งานพร้อมเริ่มกดเล่นได้ทันที
 
-### 🧮 4. Advanced Calculators & Nutrition
-- 🍔 **TDEE & Macro Target Tracker:** คำนวณโควต้า P/C/F และน้ำดื่มรายวันตามเป้าหมาย (ลดน้ำหนัก/เพิ่มกล้าม)
-- 💪 **1RM \u0026 Plate Load Calculator:** ไม่ต้องคิดเลขเอง! แอปจะคำนวณ Epley formula และบอกจำนวนเพลทเหล็กที่ต้องใส่แบบเป๊ะๆ
+### 🎮 2. Gamification & Progression (ระบบเกมมิฟิเคชัน)
+*   🏅 **Level & XP System:** ทุกน้ำหนัก จำนวนครั้งที่ยก รวมถึงการกินอาหาร จะถูกคำนวณเป็นค่าประสบการณ์ (XP) เมื่อหลอดเต็มจะมีการ Level Up 
+*   📊 **GitHub-Style Heatmap:** ตารางความขยันจุดสีเขียว ยิ่งซ้อมเยอะสียิ่งเข้ม ช่วยให้ผู้ใช้ติดตามความสม่ำเสมอและเก็บสถิติ Streak (วันซ้อมต่อเนื่อง)
+*   📱 **Instagram Story Sharing:** สร้างภาพการ์ดสถิติประจำวัน (มี Level, Streak, แคลอรีเบิร์น) พร้อมพื้นหลังสวยงามและอวาตาร์ของตัวเอง เพื่อแชร์ลง IG Story ได้ในคลิกเดียว
+*   🎉 **Post-Workout Confetti:** เอฟเฟกต์พลุฉลองความสำเร็จเมื่อซ้อมเสร็จ พร้อมให้ผู้ใช้ประเมินความเหนื่อย (Exhaustion Rating)
+
+### 🏋️ 3. Workout Control (การควบคุมการซ้อม)
+*   🕒 **Picture-in-Picture (PiP) Rest Timer:** นาฬิกาจับเวลาพักเซ็ตสุดล้ำที่สามารถ "ย่อเป็นหน้าต่างลอย" (Floating Window) ทับแอปอื่นได้ (ผู้ใช้สามารถไถหน้าจอโซเชียลระหว่างพักเซ็ตได้โดยที่เวลายังคงนับถอยหลังให้เห็น)
+*   📈 **Smart Exercise Suggestions:** ระบบ Auto-suggest ที่คอยจดจำพฤติกรรมและเดาท่าต่อไปที่กำลังจะเล่น ช่วยลดเวลาในการพิมพ์ค้นหา
+*   📅 **Calendar & History:** ระบบปฏิทินดูประวัติย้อนหลัง ทั้งแบบรายวัน (Daily) ดูรายละเอียดแต่ละเซ็ต และสรุปภาพรวมรายเดือน (Monthly)
+*   📝 **Custom Routines:** สามารถสร้างและเซฟแพทเทิร์นตารางฝึกประจำ (เช่น Leg Day) เพื่อให้วันต่อไปกดโหลดรวดเดียวไม่ต้องพิมพ์ใหม่
+
+### 🧮 4. Advanced Calculators & Nutrition (โภชนาการและการคำนวณ)
+*   🍔 **TDEE & Macro Tracker:** คํานวณพลังงานที่ใช้ต่อวันและแจกแจงโควต้า P/C/F (โปรตีน/คาร์บ/ไขมัน) ตามเป้าหมายส่วนบุคคล
+*   🌊 **Animated Water Tracker:** ระบบบันทึกการดื่มน้ำที่มาพร้อม "แอนิเมชันคลื่นน้ำ (Wave Effect)" ที่ระดับน้ำจะค่อยๆ เพิ่มสูงขึ้นตามแก้วน้ำจริง
+*   💪 **1RM (One-Rep Max) Calculator:** เครื่องมือประเมินระดับความแกร่งสูงสุด (ยกได้หนักสุดกี่กิโล) ด้วยสูตรคณิตศาสตร์ Epley Formula
+*   🏋️ **Plate Load Calculator:** เครื่องมือช่วยคำนวณการใส่แผ่นเหล็ก (Plates) บนบาร์เบล ว่าต้องใส่แผ่น 20kg หรือ 10kg ข้างละกี่แผ่นให้ได้น้ำหนักพอดี
+*   🔋 **Muscle Recovery Status:** หน้าปัดแสดงค่าความล้าของกล้ามเนื้อแต่ละส่วน (อก, หลัง, ขา) โดยวิเคราะห์ตามปริมาณเซ็ตที่เล่นไปในช่วง 48 ชั่วโมงที่ผ่านมา
+
+### ⚙️ 5. OS-Level & Utilities (ระบบพื้นฐานและความสวยงาม)
+*   🌌 **Dynamic Theming & Glassmorphism:** ธีมแอปพลิเคชัน 5 สไตล์ (Aura, Ocean, Neon, Forest, Blood Red) พร้อมเอฟเฟกต์กระจกโปร่งแสงสุดพรีเมียม
+*   💾 **Local Data Export:** ความสามารถในการส่งออกประวัติการเล่นทั้งหมดออกมาเป็นไฟล์ JSON หรือ CSV เพื่อง่ายต่อการแบคอัป
+*   🔐 **Local Authentication:** ระบบ Login/Register บันทึกข้อมูลแยก User ภายในเครื่องเดียว
+*   🚀 **120Hz Smooth UI:** มีการใช้คำสั่งระดับ System ดันเฟรมเรตหน้าจอให้ลื่นไหลสูงสุด เพื่อรีดประสิทธิภาพแอนิเมชันของ Jetpack Compose
+
+---
+
+## 🏗️ Architecture & Project Directory (สถาปัตยกรรมและหน้าที่ของไฟล์)
+
+โปรเจกต์นี้เขียนด้วย **Kotlin** และใช้ **Jetpack Compose** ทั้งหมด โครงสร้างโค้ดถูกออกแบบตามหลัก **MVVM (Model-View-ViewModel)** และ **Clean Architecture** อย่างเป็นระเบียบ เพื่อให้โค้ดดูแลรักษาง่าย (Maintainable)
+
+เพื่อให้เห็นภาพการทำงานเชิงลึก ด้านล่างคือแผนผังหน้าที่ของแต่ละโฟลเดอร์และไฟล์สำคัญ (ไล่จากระดับ Data ไปจนถึง UI):
+
+### 📁 `data/` (Data Layer - ชั้นจัดการข้อมูล)
+หน้าที่: จัดการฐานข้อมูล (Local DB) และการประมวลผลลอจิกหนักๆ
+*   📂 **`local/` (Room Database)**
+    *   `AppDatabase.kt` และ `dao/GlarmToDao.kt`: กำหนด Schema และคำสั่ง SQL (Insert, Query, Delete)
+    *   `entity/`: ไฟล์โครงสร้างตาราง เช่น `UserEntity` (เก็บ XP, เลเวล), `WorkoutEntity` (เก็บชื่อท่า, น้ำหนัก), `NutritionEntity`
+*   📂 **`preferences/`**
+    *   `SessionManager.kt`: ใช้ SharedPreferences จัดการสถานะ Login
+    *   `ThemeManager.kt`: จัดการการเปลี่ยนธีมและอัปเดตแบบ Real-time
+*   📂 **`repository/`**
+    *   **`GlarmToRepository.kt`**: **(ไฟล์หัวใจสำคัญของการจัดการข้อมูล)** ทำหน้าที่เป็น Single Source of Truth ดึงข้อมูลจาก DAO เพื่อป้อนให้ ViewModel ไฟล์นี้รวมตรรกะที่ซับซ้อน เช่น:
+        - ลอจิกการคำนวณ XP (จำกัดโควต้า 300 XP ต่อวัน) และการ Level Up
+        - อัลกอริทึมการคำนวณ Streak (วันซ้อมต่อเนื่อง)
+        - ลอจิกการดึงข้อมูลรายสัปดาห์มาทำกราฟเรดาร์และ Heatmap
+*   📂 **`util/`**
+    *   **`InstagramShareHelper.kt`**: คลาส Helper ที่แยกออกมาเขียนโค้ดวาด Canvas/Bitmap เพื่อแชร์ลง IG โดยเฉพาะ (การแยกไฟล์นี้โชว์ถึงความเข้าใจเรื่อง Single Responsibility Principle เพื่อไม่ให้ ViewModel มีลอจิกของการวาด UI ปนอยู่)
+
+### 📁 `ui/` (Presentation Layer - ชั้นแสดงผล)
+หน้าที่: จัดการหน้าจอ UI ทั้งหมดด้วย Jetpack Compose โดยมีการแบ่งโฟลเดอร์ตามฟีเจอร์อย่างชัดเจน
+*   📂 **`dashboard/`**
+    *   `DashboardScreen.kt`: หน้าแรกสุด รวมชาร์ต Heatmap, Radar Chart, และแถบ Recovery
+    *   **`DashboardViewModel.kt`**: ดึงข้อมูลจาก Repository แล้วแปลงให้อยู่ในรูปแบบ `StateFlow` เพื่อส่งให้ UI อัปเดตข้อมูลแบบ Reactive
+*   📂 **`workout/`**
+    *   `WorkoutScreen.kt`: หน้าจดบันทึกเซ็ต มีปุ่มไมค์เรียกคำสั่งเสียง และปุ่มเริ่มจับเวลา
+    *   **`WorkoutViewModel.kt`**: จัดการลอจิก Speech-to-Text สกัดคำสั่งเสียง และระบบ Auto-suggest ชื่อท่าออกกำลังกาย
+*   📂 **`camera/`**
+    *   **`CameraXTracker.kt`**: โค้ดควบคุม CameraX ที่นำไปเชื่อมกับ ML Kit ดึงจุด Joint (ข้อต่อ) มาคำนวณระยะและความลึกในการนั่ง Squat 
+*   📂 **`nutrition/` & `calculator/`**
+    *   หน้าจอสำหรับกรอกอาหาร (NutritionScreen) ผสมแอนิเมชันคลื่นน้ำ และหน้าจอรวมเครื่องคิดเลข 1RM/Plate Load/TDEE
+*   📂 **`history/` & `routines/`**
+    *   หน้าจอสำหรับดูปฏิทินย้อนหลัง และหน้าจัดการเทมเพลตแผนการซ้อม
+
+### 📄 `MainActivity.kt` (Entry Point)
+*   **หน้าที่หลัก:** เป็นจุดเริ่มต้นของแอป ทำหน้าที่เป็น Host หลักให้กับ Jetpack Compose ควบคุม **Navigation Graph** (การสลับหน้าไปมา), ดักจับพฤติกรรมตอนกดยุบแอปเพื่อเข้าสู่โหมด Picture-in-Picture, และมีคำสั่งระดับ OS ในการบังคับจอแสดงผลไปที่ 120Hz เพื่อความสมูทสูงสุด
+
+---
 
 ## 📸 Screenshots & Wireframes
 
@@ -55,37 +115,38 @@
   <img src="figma(wireframe)/change%20theme.png" width="200" alt="Theme"/>
   <img src="figma(wireframe)/Profile.png" width="200" alt="Profile"/>
   <br>
-  <i>ภาพ Wireframe หน้าจอการใช้งานแอปพลิเคชันหลักๆ</i>
+  <i>ภาพ Wireframe โครงสร้างหน้าจอหลักจากขั้นตอนการออกแบบ</i>
 </div>
 
-## 🛠️ Technology Stack & Learning Curve (สิ่งที่เราได้เรียนรู้)
-
-โปรเจกต์นี้เป็นโครงงานเดี่ยวที่ท้าทายมาก (ตอบโจทย์คะแนนการเรียนรู้ +8 และ Wow Factor +3) เนื่องจากมีการเรียนรู้และใช้ Modern Android Development แบบทะลุกรอบวิชาเรียน:
-
-- **Jetpack Compose**: ย้ายจากระบบ XML มาเขียน UI ด้วย Compose ทำให้จัดการ State ยากขึ้นตอนแรก แต่ได้ UI รวดเร็วและมี Animation ที่ลื่นไหล
-- **CameraX + Google ML Kit**: ท้าทายมากในการจัดการกับ Lifecycle ของกล้อง และการดึงข้อมูลพิกัดร่างกายมาคำนวณคณิตศาสตร์ (มุมองศาข้อต่อ) แบบ Real-time เพื่อประเมินท่า Squat
-- **Picture-in-Picture (PiP)**: การจัดการให้แอปย่อส่วนเป็นหน้าต่างลอย และนับเวลาถอยหลังข้าม Lifecycle ได้ ช่วยแก้ปัญหาการเล่นมือถือเพลินระหว่างพักเซ็ต (การแก้ปัญหาและการใช้งานจริง +5)
-- **SpeechRecognizer API**: ศึกษาการแปลงเสียงพูดเป็นข้อความและประมวลผล (NLP) เพื่อสกัดตัวเลขน้ำหนักออกมา 
-- **Room Database**: การออกแบบ Database schema ให้เก็บข้อมูลประวัติการซ้อมได้อย่างเป็นระบบ
-
-## ⚙️ Getting Started (การรันโปรเจกต์)
-
-### 📋 Prerequisites
-- Android Studio (Jellyfish หรือใหม่กว่า)
-- อุปกรณ์ดรอดย์ หรือ Emulator ตัวที่รองรับ API Level 24 ขึ้นไป (แนะนำให้เครื่องจริงเพื่อให้ใช้งานกล้องได้)
-
-### 🚀 Installation
-1. Clone the repo
-   ```sh
-   git clone https://github.com/Graceiscoming/CP213_LearnAndroid.git
-   ```
-2. เปิดโปรเจกต์ใน Android Studio โดยเลือกโฟลเดอร์ `Project/GlarmTo`
-3. รอจังหวะให้ Gradle โหลดไลบรารีต่างๆ ให้เสร็จสิ้น (Sync Project with Gradle Files)
-4. กดปุ่ม `Run` หรือ `Shift + F10` เพื่อติดตั้งลงเครื่องและทดสอบการประเมินท่า Squat ได้เลย!
+> [🔗 คลิกเพื่อดู Figma Wireframe ฉบับเต็มได้ที่นี่](https://www.figma.com/design/J0VdZH5uxkX7j6y8v43CV6/Mobile-app?node-id=0-1&t=lydNLnpRY32mfKTV-1)
 
 ---
 
-> *"เพราะการออกกำลังกาย ไม่ใช่แค่เรื่องของแรงกาย แต่เป็นเรื่องของความสนุกและสม่ำเสมอ"* 💪
+## 🛠️ Technology Stack & Learning Curve (สิ่งที่เราได้เรียนรู้)
 
-## figma Link : 
-https://www.figma.com/design/J0VdZH5uxkX7j6y8v43CV6/Mobile-app?node-id=0-1&t=lydNLnpRY32mfKTV-1
+โปรเจกต์นี้เป็นโครงงานเดี่ยวที่มีความท้าทายสูงมาก เนื่องจากมีการศึกษาและเลือกใช้เทคโนโลยีระดับ Modern Android Development ขั้นสูง ที่อยู่นอกเหนือจากเนื้อหาพื้นฐาน:
+
+- **Jetpack Compose**: ย้ายจากระบบ View/XML แบบเก่า มาเขียน UI ด้วยโค้ดแบบ Declarative ช่วยเพิ่มความยืดหยุ่นในการจัดหน้าจอและทำ Animation ได้ลื่นไหล
+- **CameraX + Google ML Kit**: ท้าทายอย่างมากในการจัดการ Lifecycle ของกล้อง และการใช้คณิตศาสตร์ดึงพิกัด (X,Y) ของร่างกายมาคำนวณองศาข้อต่อแบบ Real-time
+- **Picture-in-Picture (PiP)**: การเขียนให้แอปย่อส่วนเป็นหน้าต่างลอยทะลุกรอบ Lifecycle ปกติ เพื่อแก้ปัญหาผู้ใช้ชอบเล่นมือถือเพลินระหว่างการพักเซ็ต
+- **SpeechRecognizer API**: การแปลงเสียงพูดเป็นข้อความและเขียนเงื่อนไข (NLP) เพื่อสกัดชื่อท่า ตัวเลขน้ำหนัก และจำนวนครั้ง ออกมาแยกกรอกลงช่องโดยอัตโนมัติ
+- **Room Database & StateFlow**: เปลี่ยนการดึงข้อมูลแบบดั้งเดิมมาเป็นการใช้ StateFlow ดักฟังความเปลี่ยนแปลงแบบ Reactive ทำให้กราฟและตัวเลขใน Dashboard อัปเดตทันทีที่ผู้ใช้บันทึกเซ็ตใหม่เสร็จ
+
+---
+
+## 🚀 Getting Started (วิธีการรันและทดสอบ)
+
+### 💡 วิธีที่ 1: ตรวจผ่านไฟล์ APK โดยตรง (Fast & Recommended)
+เพื่อความสะดวกและความรวดเร็วในการตรวจ อาจารย์สามารถดาวน์โหลดไฟล์แอปพลิเคชันไปติดตั้งลงบนสมาร์ทโฟน Android ได้ทันที โดยเข้าไปที่แท็บ **"Actions"** (ด้านบนของ GitHub Repository นี้) ระบบ CI/CD จะทำการ Build ไฟล์ `GlarmTo-Debug-APK` ไว้ให้อัตโนมัติทุกครั้งที่มีการอัปเดตโค้ด
+
+### 💻 วิธีที่ 2: รันผ่าน Android Studio
+1. Clone โปรเจกต์:
+   ```bash
+   git clone https://github.com/Graceiscoming/CP213_LearnAndroid.git
+   ```
+2. เปิดโปรเจกต์ใน **Android Studio (Jellyfish หรือใหม่กว่า)** โดยเลือกเปิดที่โฟลเดอร์ `Project/GlarmTo`
+3. รอจังหวะให้ Gradle ทำการโหลดและ Sync ไลบรารีให้สำเร็จ
+4. **แนะนำอย่างยิ่ง** ให้เชื่อมต่อ **สมาร์ทโฟน Android เครื่องจริง** เพื่อรันโปรเจกต์ (แทนการใช้ Emulator) เนื่องจากฟีเจอร์ "กล้อง AI จับท่าทาง" และ "ระบบสั่งการด้วยเสียง" ต้องการเข้าถึงฮาร์ดแวร์จริงเพื่อให้ได้ประสบการณ์สูงสุด
+5. กดปุ่ม `Run` (สัญลักษณ์ Play สีเขียว) หรือ `Shift + F10`
+
+---
