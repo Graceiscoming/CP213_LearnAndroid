@@ -115,6 +115,7 @@
   <img src="figma(wireframe)/ai%20gen%20workout.png" width="200" alt="AI Workout"/>
   <img src="figma(wireframe)/change%20theme.png" width="200" alt="Theme"/>
   <img src="figma(wireframe)/Profile.png" width="200" alt="Profile"/>
+  <img src="figma(wireframe)/figma_with_flow.png" width="200" alt="Profile"/>
   <br>
   <i>ภาพ Wireframe โครงสร้างหน้าจอหลักจากขั้นตอนการออกแบบ</i>
 </div>
