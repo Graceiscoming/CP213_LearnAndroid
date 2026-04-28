@@ -43,6 +43,13 @@ import androidx.compose.foundation.layout.imePadding
 
 import android.os.Build
 
+/**
+ * The main entry point of the GlarmTo application.
+ * 
+ * This activity acts as the host for Jetpack Compose UI. It configures the
+ * window properties (like edge-to-edge display and 120Hz refresh rate) and
+ * determines the initial destination based on user authentication state.
+ */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,6 +110,15 @@ sealed class Screen(val route: String, val title: String, val icon: androidx.com
     object Calculator : Screen("calculator", "Profile", Icons.Filled.Person)
 }
 
+/**
+ * The primary navigation container for the application.
+ * 
+ * Manages the [NavHost] and Bottom Navigation bar. It dynamically hides the
+ * bottom bar on authentication and onboarding screens, providing a seamless
+ * user experience.
+ * 
+ * @param startDestination The initial route string to launch.
+ */
 @Composable
 fun MainScreen(startDestination: String) {
     val navController = rememberNavController()

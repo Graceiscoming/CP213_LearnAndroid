@@ -17,6 +17,14 @@ import java.util.Calendar
 
 data class PeriodTrainingStats(val totalVolume: Double, val totalSets: Int)
 
+/**
+ * The Single Source of Truth for the GlarmTo application.
+ * 
+ * This Repository pattern implementation manages data operations between the 
+ * local Room database ([GlarmToDao]) and the application's ViewModels.
+ * It encapsulates all complex business logic related to XP calculation, 
+ * level progression, streaks, and data export.
+ */
 class GlarmToRepository(private val dao: GlarmToDao, private val sessionManager: SessionManager) {
 
     companion object {
