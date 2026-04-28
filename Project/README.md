@@ -11,6 +11,12 @@
     <img src="https://img.shields.io/badge/Machine_Learning-FF6F00?style=for-the-badge&logo=google&logoColor=white" alt="ML Kit">
     <img src="https://img.shields.io/badge/Architecture-MVVM-blue?style=for-the-badge" alt="MVVM">
   </p>
+  
+  <h3>
+    <a href="https://github.com/Graceiscoming/CP213_LearnAndroid/releases/latest">
+      <img src="https://img.shields.io/badge/📱_Download_APK-FF3366?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
+    </a>
+  </h3>
 </div>
 
 ---
